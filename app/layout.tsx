@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "FunBetz - Free Parlay Betting",
   description:
-    "Build parlays on EPL and NFL games with virtual betz. Compete on the global leaderboard!",
+    "Build parlays across NFL, NBA, MLB, NHL, college football, college basketball, and EPL with virtual betz. Compete on the global leaderboard!",
 };
 
 export default function RootLayout({

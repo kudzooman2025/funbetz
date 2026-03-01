@@ -10,7 +10,7 @@ export default function LandingPage() {
           <span className="text-brand-gold">Betz</span>
         </h1>
         <p className="text-brand-muted text-lg mb-8">
-          Free-to-play parlay betting on EPL & NFL
+          Free-to-play parlay betting across 7 major leagues
         </p>
 
         {/* Decorative Ticket */}
@@ -56,7 +56,7 @@ export default function LandingPage() {
           <div className="text-3xl mb-2">🎯</div>
           <h3 className="font-semibold mb-1">Build Parlays</h3>
           <p className="text-brand-muted text-sm">
-            Pick 3-8 winners across EPL and NFL for up to 150x payouts
+            Pick 3-8 winners across NFL, NBA, MLB &amp; more for up to 150x payouts
           </p>
         </div>
         <div className="bg-brand-card border border-brand-border rounded-lg p-5 text-center">

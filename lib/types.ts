@@ -1,6 +1,8 @@
+import type { LeagueKey } from "./constants";
+
 export interface GameResponse {
   id: string;
-  sport: "EPL" | "NFL";
+  sport: LeagueKey;
   homeTeam: string;
   awayTeam: string;
   homeTeamBadge: string | null;

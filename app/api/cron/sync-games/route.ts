@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 import {
   fetchRoundEvents,
   fetchEventById,
   parseEventToGameData,
+  leagueKeyFromEvent,
   delay,
 } from "@/lib/sports-api";
 
@@ -17,11 +19,11 @@ export async function POST(req: Request) {
   const results = { synced: 0, updated: 0, errors: [] as string[] };
 
   try {
-    // Sync EPL rounds - fetch a range of rounds around current time
-    await syncLeagueRounds("EPL", results);
-    await delay(2000); // Rate limit buffer
-    // Sync NFL rounds
-    await syncLeagueRounds("NFL", results);
+    // Sync all leagues with rate limiting between each
+    for (const key of LEAGUE_KEYS) {
+      await syncLeagueRounds(key, results);
+      await delay(2500);
+    }
 
     // Also update games that are in active parlays
     await updateActiveParlayGames(results);
@@ -33,39 +35,40 @@ export async function POST(req: Request) {
 }
 
 async function syncLeagueRounds(
-  league: "EPL" | "NFL",
+  league: LeagueKey,
   results: { synced: number; updated: number; errors: string[] }
 ) {
-  // Find the current round: the latest round that has SCHEDULED or recent games
-  // First check if we have any games with upcoming dates
+  const config = LEAGUES[league];
+
+  // Find the current round from DB
   const upcomingGame = await prisma.game.findFirst({
     where: { sport: league, status: "SCHEDULED", scheduledStart: { gte: new Date() } },
     orderBy: { round: "asc" },
     select: { round: true },
   });
 
-  // If no upcoming games in DB, use a smart default based on date
   let currentRound: number;
   if (upcomingGame?.round) {
     currentRound = upcomingGame.round;
   } else {
-    // Estimate the current round from the calendar
-    // EPL: season starts mid-Aug, ~1 round per week, 38 rounds
-    // NFL: season starts early Sep, ~1 round per week, 18 weeks
+    // Data-driven round estimation from calendar
     const now = new Date();
-    if (league === "EPL") {
-      const seasonStart = new Date("2025-08-16"); // EPL 2025-2026 approx start
-      const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      currentRound = Math.max(1, Math.min(38, weeksSinceStart + 1));
-    } else {
-      const seasonStart = new Date("2025-09-04"); // NFL 2025 approx start
-      const weeksSinceStart = Math.floor((now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      currentRound = Math.max(1, Math.min(18, weeksSinceStart + 1));
-    }
+    const seasonStart = new Date(config.seasonStart);
+    const weeksSinceStart = Math.floor(
+      (now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
+    currentRound = Math.max(
+      1,
+      Math.min(config.totalRounds, weeksSinceStart * config.roundsPerWeek + 1)
+    );
   }
 
-  // Fetch current round and next 3 rounds (covers ~1 month of games)
-  for (let r = Math.max(1, currentRound - 1); r <= currentRound + 3; r++) {
+  // High-round sports sync fewer rounds ahead to respect rate limits
+  const roundsAhead = config.totalRounds > 40 ? 1 : 3;
+  const startRound = Math.max(1, currentRound - 1);
+  const endRound = Math.min(config.totalRounds, currentRound + roundsAhead);
+
+  for (let r = startRound; r <= endRound; r++) {
     try {
       const events = await fetchRoundEvents(league, r);
 
@@ -108,7 +111,7 @@ async function updateActiveParlayGames(
         },
       },
     },
-    select: { externalId: true, id: true },
+    select: { externalId: true, id: true, sport: true },
   });
 
   for (const game of pendingGames) {
@@ -116,10 +119,9 @@ async function updateActiveParlayGames(
       const event = await fetchEventById(game.externalId);
       if (!event) continue;
 
-      const gameData = parseEventToGameData(
-        event,
-        event.strSport === "Soccer" ? "EPL" : "NFL"
-      );
+      // Use league ID lookup, fall back to DB sport
+      const sport = leagueKeyFromEvent(event) ?? (game.sport as LeagueKey);
+      const gameData = parseEventToGameData(event, sport);
 
       await prisma.game.update({
         where: { id: game.id },

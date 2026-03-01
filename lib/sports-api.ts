@@ -1,4 +1,4 @@
-import { LEAGUES, COMPLETED_STATUSES } from "./constants";
+import { LEAGUES, ALL_COMPLETED_STATUSES, LEAGUE_ID_TO_KEY, type LeagueKey } from "./constants";
 import { GameStatus } from "@/generated/prisma/client";
 
 const BASE_URL = process.env.SPORTSDB_BASE_URL || "https://www.thesportsdb.com/api/v1/json";
@@ -24,10 +24,17 @@ export interface SportsDBEvent {
 }
 
 /**
+ * Determine our league key from a TheSportsDB event using its league ID.
+ */
+export function leagueKeyFromEvent(event: SportsDBEvent): LeagueKey | undefined {
+  return LEAGUE_ID_TO_KEY[event.idLeague];
+}
+
+/**
  * Fetch all events for a given round in a league.
  */
 export async function fetchRoundEvents(
-  leagueKey: "EPL" | "NFL",
+  leagueKey: LeagueKey,
   round: number
 ): Promise<SportsDBEvent[]> {
   const league = LEAGUES[leagueKey];
@@ -60,7 +67,7 @@ export async function fetchEventById(
  * Fetch all events for the current season (limited to 15 per call on free tier).
  */
 export async function fetchSeasonEvents(
-  leagueKey: "EPL" | "NFL"
+  leagueKey: LeagueKey
 ): Promise<SportsDBEvent[]> {
   const league = LEAGUES[leagueKey];
   const url = `${BASE_URL}/${API_KEY}/eventsseason.php?id=${league.id}&s=${league.season}`;
@@ -79,7 +86,7 @@ export function mapApiStatusToGameStatus(
   if (!apiStatus || apiStatus === "Not Started" || apiStatus === "") {
     return "SCHEDULED";
   }
-  if (COMPLETED_STATUSES.includes(apiStatus)) {
+  if (ALL_COMPLETED_STATUSES.includes(apiStatus)) {
     return "COMPLETED";
   }
   if (apiStatus === "Match Postponed" || apiStatus === "Postponed") {
@@ -88,7 +95,7 @@ export function mapApiStatusToGameStatus(
   if (apiStatus === "Cancelled" || apiStatus === "Abandoned") {
     return "CANCELLED";
   }
-  // In-progress statuses: "1H", "2H", "HT", "ET", etc.
+  // In-progress statuses: "1H", "2H", "HT", "ET", "Q1", "Q2", etc.
   return "IN_PROGRESS";
 }
 
@@ -97,7 +104,7 @@ export function mapApiStatusToGameStatus(
  */
 export function parseEventToGameData(
   event: SportsDBEvent,
-  sport: "EPL" | "NFL"
+  sport: LeagueKey
 ) {
   const status = mapApiStatusToGameStatus(event.strStatus);
   const homeScore =

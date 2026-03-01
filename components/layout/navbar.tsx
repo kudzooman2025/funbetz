@@ -28,7 +28,7 @@ export function Navbar() {
           <Link href="/dashboard" className="text-gray-300 hover:text-brand-green transition-colors">
             Dashboard
           </Link>
-          <Link href="/games/epl" className="text-gray-300 hover:text-brand-green transition-colors">
+          <Link href="/dashboard" className="text-gray-300 hover:text-brand-green transition-colors">
             Games
           </Link>
           <Link href="/parlays" className="text-gray-300 hover:text-brand-green transition-colors">

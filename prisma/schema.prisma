@@ -10,6 +10,11 @@ datasource db {
 enum Sport {
   EPL
   NFL
+  MLB
+  NBA
+  NHL
+  NCAAF
+  NCAAB
 }
 
 enum GameStatus {

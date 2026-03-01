@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getBettingWindow } from "@/lib/utils";
+import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -10,20 +11,27 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const sport = searchParams.get("sport")?.toUpperCase();
+  const sportParam = searchParams.get("sport")?.toUpperCase();
 
-  if (sport && sport !== "EPL" && sport !== "NFL") {
-    return NextResponse.json(
-      { error: "Invalid sport. Must be EPL or NFL" },
-      { status: 400 }
-    );
+  // Support comma-separated sports: ?sport=NFL,NBA,MLB
+  let sportFilter: LeagueKey[] | undefined;
+  if (sportParam) {
+    const requested = sportParam.split(",").map((s) => s.trim());
+    const invalid = requested.find((s) => !LEAGUE_KEYS.includes(s as LeagueKey));
+    if (invalid) {
+      return NextResponse.json(
+        { error: `Invalid sport "${invalid}". Must be one of: ${LEAGUE_KEYS.join(", ")}` },
+        { status: 400 }
+      );
+    }
+    sportFilter = requested as LeagueKey[];
   }
 
   const { start, end } = getBettingWindow();
 
   const games = await prisma.game.findMany({
     where: {
-      ...(sport ? { sport: sport as "EPL" | "NFL" } : {}),
+      ...(sportFilter ? { sport: { in: sportFilter } } : {}),
       scheduledStart: {
         gte: start,
         lte: end,

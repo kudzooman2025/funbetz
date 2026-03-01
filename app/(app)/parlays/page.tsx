@@ -199,6 +199,33 @@ function ParlayCard({ parlay }: { parlay: ParlayResponse }) {
         </div>
       </div>
 
+      {/* Check back message for pending parlays */}
+      {parlay.status === "PENDING" && (() => {
+        const latestGame = parlay.games.reduce((latest, g) =>
+          new Date(g.scheduledStart) > new Date(latest.scheduledStart) ? g : latest
+        );
+        // Estimate result time: last game start + 3 hours for game duration + 4 hours resolve buffer
+        const estimatedTime = new Date(
+          new Date(latestGame.scheduledStart).getTime() + 4 * 60 * 60 * 1000
+        );
+        const timeStr = estimatedTime.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+        const dateStr = estimatedTime.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          month: "short",
+          day: "numeric",
+        });
+        return (
+          <p className="text-sm text-brand-gold font-bold mt-2">
+            Check back at {timeStr} on {dateStr} to see if you won!
+          </p>
+        );
+      })()}
+
       <div className="text-xs text-brand-muted mt-2">
         {formatGameTime(parlay.createdAt)}
       </div>

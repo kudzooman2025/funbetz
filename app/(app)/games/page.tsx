@@ -1,15 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTicketStore } from "@/stores/ticket-store";
+import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 import { MIN_PARLAY_GAMES, MAX_PARLAY_GAMES } from "@/lib/constants";
 import type { GameResponse } from "@/lib/types";
 
 export default function GamesPage() {
-  const params = useParams();
-  const sport = (params.sport as string).toUpperCase();
+  return (
+    <Suspense fallback={
+      <div className="space-y-3">
+        <div className="h-8 bg-brand-surface rounded animate-pulse w-48" />
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-20 bg-brand-surface rounded-lg animate-pulse" />
+        ))}
+      </div>
+    }>
+      <GamesContent />
+    </Suspense>
+  );
+}
+
+function GamesContent() {
+  const searchParams = useSearchParams();
+  const sportsParam = searchParams.get("sports")?.toUpperCase() || "";
+  const sportKeys = sportsParam
+    .split(",")
+    .filter((s) => LEAGUE_KEYS.includes(s as LeagueKey)) as LeagueKey[];
+
   const [games, setGames] = useState<GameResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,7 +39,8 @@ export default function GamesPage() {
   useEffect(() => {
     async function fetchGames() {
       try {
-        const res = await fetch(`/api/games?sport=${sport}`);
+        const sportQuery = sportKeys.length > 0 ? `?sport=${sportKeys.join(",")}` : "";
+        const res = await fetch(`/api/games${sportQuery}`);
         if (!res.ok) throw new Error("Failed to fetch games");
         const data = await res.json();
         setGames(data.games);
@@ -30,11 +51,22 @@ export default function GamesPage() {
       }
     }
     fetchGames();
-  }, [sport]);
+  }, [sportsParam]);
 
-  const sportLabel = sport === "EPL" ? "English Premier League" : "NFL";
   const selectedCount = selectedGames.length;
   const canBuild = selectedCount >= MIN_PARLAY_GAMES;
+
+  // Group games by sport
+  const gamesBySport: Record<string, GameResponse[]> = {};
+  for (const game of games) {
+    if (!gamesBySport[game.sport]) gamesBySport[game.sport] = [];
+    gamesBySport[game.sport].push(game);
+  }
+
+  const sportLabel =
+    sportKeys.length === 1
+      ? LEAGUES[sportKeys[0]].name
+      : `${sportKeys.length} Leagues`;
 
   if (loading) {
     return (
@@ -60,7 +92,7 @@ export default function GamesPage() {
           href="/dashboard"
           className="text-brand-muted hover:text-white text-sm"
         >
-          Change Sport
+          Change Sports
         </Link>
       </div>
 
@@ -73,91 +105,86 @@ export default function GamesPage() {
       {games.length === 0 && !error ? (
         <div className="bg-brand-card border border-brand-border rounded-lg p-8 text-center">
           <p className="text-brand-muted">
-            No upcoming {sportLabel} games available right now.
+            No upcoming games available right now.
           </p>
           <p className="text-brand-muted text-sm mt-2">
             Games appear when they&apos;re scheduled within the current betting window.
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {games.map((game) => {
-            const isSelected = selectedGames.some(
-              (g) => g.gameId === game.id
-            );
-            const selectedPick = selectedGames.find(
-              (g) => g.gameId === game.id
-            )?.pickedTeam;
-            const atMax = selectedCount >= MAX_PARLAY_GAMES && !isSelected;
-
+        <div className="space-y-6">
+          {Object.entries(gamesBySport).map(([sport, sportGames]) => {
+            const config = LEAGUES[sport as LeagueKey];
             return (
-              <GameRow
-                key={game.id}
-                game={game}
-                isSelected={isSelected}
-                selectedPick={selectedPick}
-                disabled={atMax}
-                onPickHome={() => {
-                  if (isSelected && selectedPick === game.homeTeam) {
-                    removeGame(game.id);
-                  } else if (isSelected) {
-                    removeGame(game.id);
-                    addGame(
-                      {
-                        gameId: game.id,
-                        homeTeam: game.homeTeam,
-                        awayTeam: game.awayTeam,
-                        homeTeamBadge: game.homeTeamBadge,
-                        awayTeamBadge: game.awayTeamBadge,
-                        scheduledStart: game.scheduledStart,
-                      },
-                      game.homeTeam
+              <div key={sport}>
+                {/* Sport section header */}
+                {Object.keys(gamesBySport).length > 1 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">{config?.emoji}</span>
+                    <h2 className="text-lg font-bold">{config?.name || sport}</h2>
+                    <span className="text-brand-muted text-sm">
+                      ({sportGames.length} game{sportGames.length !== 1 ? "s" : ""})
+                    </span>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {sportGames.map((game) => {
+                    const isSelected = selectedGames.some(
+                      (g) => g.gameId === game.id
                     );
-                  } else {
-                    addGame(
-                      {
-                        gameId: game.id,
-                        homeTeam: game.homeTeam,
-                        awayTeam: game.awayTeam,
-                        homeTeamBadge: game.homeTeamBadge,
-                        awayTeamBadge: game.awayTeamBadge,
-                        scheduledStart: game.scheduledStart,
-                      },
-                      game.homeTeam
+                    const selectedPick = selectedGames.find(
+                      (g) => g.gameId === game.id
+                    )?.pickedTeam;
+                    const atMax = selectedCount >= MAX_PARLAY_GAMES && !isSelected;
+
+                    return (
+                      <GameRow
+                        key={game.id}
+                        game={game}
+                        isSelected={isSelected}
+                        selectedPick={selectedPick}
+                        disabled={atMax}
+                        onPickHome={() => {
+                          if (isSelected && selectedPick === game.homeTeam) {
+                            removeGame(game.id);
+                          } else {
+                            if (isSelected) removeGame(game.id);
+                            addGame(
+                              {
+                                gameId: game.id,
+                                homeTeam: game.homeTeam,
+                                awayTeam: game.awayTeam,
+                                homeTeamBadge: game.homeTeamBadge,
+                                awayTeamBadge: game.awayTeamBadge,
+                                scheduledStart: game.scheduledStart,
+                              },
+                              game.homeTeam
+                            );
+                          }
+                        }}
+                        onPickAway={() => {
+                          if (isSelected && selectedPick === game.awayTeam) {
+                            removeGame(game.id);
+                          } else {
+                            if (isSelected) removeGame(game.id);
+                            addGame(
+                              {
+                                gameId: game.id,
+                                homeTeam: game.homeTeam,
+                                awayTeam: game.awayTeam,
+                                homeTeamBadge: game.homeTeamBadge,
+                                awayTeamBadge: game.awayTeamBadge,
+                                scheduledStart: game.scheduledStart,
+                              },
+                              game.awayTeam
+                            );
+                          }
+                        }}
+                      />
                     );
-                  }
-                }}
-                onPickAway={() => {
-                  if (isSelected && selectedPick === game.awayTeam) {
-                    removeGame(game.id);
-                  } else if (isSelected) {
-                    removeGame(game.id);
-                    addGame(
-                      {
-                        gameId: game.id,
-                        homeTeam: game.homeTeam,
-                        awayTeam: game.awayTeam,
-                        homeTeamBadge: game.homeTeamBadge,
-                        awayTeamBadge: game.awayTeamBadge,
-                        scheduledStart: game.scheduledStart,
-                      },
-                      game.awayTeam
-                    );
-                  } else {
-                    addGame(
-                      {
-                        gameId: game.id,
-                        homeTeam: game.homeTeam,
-                        awayTeam: game.awayTeam,
-                        homeTeamBadge: game.homeTeamBadge,
-                        awayTeamBadge: game.awayTeamBadge,
-                        scheduledStart: game.scheduledStart,
-                      },
-                      game.awayTeam
-                    );
-                  }
-                }}
-              />
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
