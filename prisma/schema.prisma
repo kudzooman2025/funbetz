@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Sport {
+  EPL
+  NFL
+}
+
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  POSTPONED
+  CANCELLED
+}
+
+enum ParlayStatus {
+  PENDING
+  WON
+  LOST
+  CANCELLED
+}
+
+enum GamePickResult {
+  PENDING
+  WON
+  LOST
+  PUSH
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String   @map("password_hash")
+  walletBalance Int      @default(1000) @map("wallet_balance")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  leaderboardScore LeaderboardScore?
+  parlays          Parlay[]
+
+  @@map("users")
+}
+
+model LeaderboardScore {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id")
+  cumulativeScore Int      @default(0) @map("cumulative_score")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([cumulativeScore(sort: Desc)])
+  @@map("leaderboard_scores")
+}
+
+model Game {
+  id             String     @id @default(cuid())
+  externalId     String     @unique @map("external_id")
+  sport          Sport
+  league         String
+  homeTeam       String     @map("home_team")
+  awayTeam       String     @map("away_team")
+  homeTeamBadge  String?    @map("home_team_badge")
+  awayTeamBadge  String?    @map("away_team_badge")
+  scheduledStart DateTime   @map("scheduled_start")
+  homeScore      Int?       @map("home_score")
+  awayScore      Int?       @map("away_score")
+  status         GameStatus @default(SCHEDULED)
+  round          Int?
+  season         String?
+  completedAt    DateTime?  @map("completed_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  parlayGames ParlayGame[]
+
+  @@index([sport, scheduledStart])
+  @@index([status])
+  @@map("games")
+}
+
+model Parlay {
+  id         String       @id @default(cuid())
+  userId     String       @map("user_id")
+  betAmount  Int          @map("bet_amount")
+  numGames   Int          @map("num_games")
+  multiplier Float
+  status     ParlayStatus @default(PENDING)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  resolvedAt DateTime?    @map("resolved_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parlayGames ParlayGame[]
+  result      ParlayResult?
+
+  @@index([userId, status])
+  @@index([status])
+  @@map("parlays")
+}
+
+model ParlayGame {
+  id         String         @id @default(cuid())
+  parlayId   String         @map("parlay_id")
+  gameId     String         @map("game_id")
+  pickedTeam String         @map("picked_team")
+  result     GamePickResult @default(PENDING)
+
+  parlay Parlay @relation(fields: [parlayId], references: [id], onDelete: Cascade)
+  game   Game   @relation(fields: [gameId], references: [id])
+
+  @@unique([parlayId, gameId])
+  @@map("parlay_games")
+}
+
+model ParlayResult {
+  id                    String   @id @default(cuid())
+  parlayId              String   @unique @map("parlay_id")
+  payoutAmount          Int      @map("payout_amount")
+  leaderboardAdjustment Int      @map("leaderboard_adjustment")
+  walletAdjustment      Int      @map("wallet_adjustment")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  parlay Parlay @relation(fields: [parlayId], references: [id], onDelete: Cascade)
+
+  @@map("parlay_results")
+}
