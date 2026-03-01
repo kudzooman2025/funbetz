@@ -52,6 +52,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // Block replenish if user has any active (PENDING) parlays
+  const activeParlays = await prisma.parlay.count({
+    where: { userId: session.user.id, status: "PENDING" },
+  });
+
+  if (activeParlays > 0) {
+    return NextResponse.json(
+      { error: "You cannot replenish while you have active parlays. Wait for all bets to resolve." },
+      { status: 400 }
+    );
+  }
+
   const newBalance = Math.min(amount, WALLET_MAX);
 
   await prisma.user.update({
