@@ -83,7 +83,7 @@ export async function fetchSeasonEvents(
 export function mapApiStatusToGameStatus(
   apiStatus: string | null
 ): GameStatus {
-  if (!apiStatus || apiStatus === "Not Started" || apiStatus === "") {
+  if (!apiStatus || apiStatus === "Not Started" || apiStatus === "NS" || apiStatus === "") {
     return "SCHEDULED";
   }
   if (ALL_COMPLETED_STATUSES.includes(apiStatus)) {

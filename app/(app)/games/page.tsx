@@ -33,6 +33,8 @@ function GamesContent() {
   const [games, setGames] = useState<GameResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [showBrokePopup, setShowBrokePopup] = useState(false);
 
   const { selectedGames, addGame, removeGame } = useTicketStore();
 
@@ -51,6 +53,10 @@ function GamesContent() {
       }
     }
     fetchGames();
+    fetch("/api/wallet")
+      .then((res) => res.json())
+      .then((data) => setWalletBalance(data.balance))
+      .catch(() => {});
   }, [sportsParam]);
 
   const selectedCount = selectedGames.length;
@@ -204,17 +210,52 @@ function GamesContent() {
                   : ""}
               </span>
             </div>
-            <Link
-              href="/ticket"
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                canBuild
-                  ? "bg-brand-green text-brand-dark hover:bg-green-400"
-                  : "bg-brand-surface text-brand-muted cursor-not-allowed"
-              }`}
-              onClick={(e) => !canBuild && e.preventDefault()}
-            >
-              Build Ticket
-            </Link>
+            {canBuild ? (
+              walletBalance === 0 ? (
+                <button
+                  onClick={() => setShowBrokePopup(true)}
+                  className="px-4 py-2 rounded-lg font-bold text-sm bg-brand-green text-brand-dark hover:bg-green-400 transition-colors"
+                >
+                  Build Ticket
+                </button>
+              ) : (
+                <Link
+                  href="/ticket"
+                  className="px-4 py-2 rounded-lg font-bold text-sm bg-brand-green text-brand-dark hover:bg-green-400 transition-colors"
+                >
+                  Build Ticket
+                </Link>
+              )
+            ) : (
+              <span className="px-4 py-2 rounded-lg font-bold text-sm bg-brand-surface text-brand-muted cursor-not-allowed">
+                Build Ticket
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Out of betz popup */}
+      {showBrokePopup && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-brand-card border border-brand-border rounded-lg p-6 max-w-sm w-full text-center">
+            <div className="text-4xl mb-3">&#128176;</div>
+            <h2 className="text-xl font-bold mb-2">Hold your horses!</h2>
+            <p className="text-brand-muted mb-4">You&apos;re outta betz!</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBrokePopup(false)}
+                className="flex-1 py-2.5 border border-brand-border rounded-lg text-brand-muted hover:text-white transition-colors"
+              >
+                Close
+              </button>
+              <Link
+                href="/wallet"
+                className="flex-1 py-2.5 bg-brand-green text-brand-dark font-bold rounded-lg hover:bg-green-400 transition-colors"
+              >
+                Go to Wallet
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -249,13 +290,17 @@ function GameRow({
 
   return (
     <div
-      className={`bg-brand-card border rounded-lg p-4 transition-colors ${
+      className={`bg-brand-card border rounded-lg p-3 transition-colors ${
         isSelected ? "border-brand-green" : "border-brand-border"
       } ${disabled ? "opacity-50" : ""}`}
     >
-      <div className="text-xs text-brand-muted mb-2">{gameTime} EST</div>
-
       <div className="flex items-center gap-2">
+        {/* Game time on the left */}
+        <div className="text-[11px] text-brand-muted leading-tight text-center min-w-[60px] shrink-0">
+          <div>{gameTime.split(",").slice(0, 2).join(",")}</div>
+          <div>{gameTime.split(",").slice(2).join(",").trim()} ET</div>
+        </div>
+
         {/* Home team pick */}
         <button
           onClick={onPickHome}

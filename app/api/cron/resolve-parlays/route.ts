@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { WALLET_MAX } from "@/lib/constants";
 
-const RESOLVE_DELAY_HOURS = 4;
+const RESOLVE_DELAY_HOURS = 1;
 
 export async function POST(req: Request) {
   // Verify cron secret

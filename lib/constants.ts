@@ -44,13 +44,13 @@ export const LEAGUES = {
   MLB: {
     id: "4424",
     strSport: "Baseball",
-    season: "2025",
+    season: "2026",
     name: "MLB",
     emoji: "\u26BE",
     description: "Pick winners from MLB baseball games",
-    seasonStart: "2025-03-27",
-    totalRounds: 180,
-    roundsPerWeek: 7,
+    seasonStart: "2026-03-25",
+    totalRounds: 26,
+    roundsPerWeek: 1,
     completedStatuses: ["Game Over", "Final"],
   },
   NBA: {
@@ -61,8 +61,8 @@ export const LEAGUES = {
     emoji: "\uD83C\uDFC0",
     description: "Pick winners from NBA basketball games",
     seasonStart: "2025-10-21",
-    totalRounds: 80,
-    roundsPerWeek: 3,
+    totalRounds: 26,
+    roundsPerWeek: 1,
     completedStatuses: ["Game Over", "Final"],
   },
   NHL: {
@@ -73,8 +73,8 @@ export const LEAGUES = {
     emoji: "\uD83C\uDFD2",
     description: "Pick winners from NHL hockey games",
     seasonStart: "2025-10-07",
-    totalRounds: 80,
-    roundsPerWeek: 3,
+    totalRounds: 26,
+    roundsPerWeek: 1,
     completedStatuses: ["Game Over", "Final", "SO"],
   },
   NCAAF: {
@@ -88,18 +88,6 @@ export const LEAGUES = {
     totalRounds: 15,
     roundsPerWeek: 1,
     completedStatuses: ["Game Over", "FT"],
-  },
-  NCAAB: {
-    id: "4607",
-    strSport: "Basketball",
-    season: "2025-2026",
-    name: "College Basketball",
-    emoji: "\uD83C\uDFC0",
-    description: "Pick winners from D1 college basketball",
-    seasonStart: "2025-11-04",
-    totalRounds: 30,
-    roundsPerWeek: 2,
-    completedStatuses: ["Game Over", "Final"],
   },
 } as const;
 

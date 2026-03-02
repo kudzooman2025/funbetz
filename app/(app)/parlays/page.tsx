@@ -145,44 +145,42 @@ function ParlayCard({ parlay }: { parlay: ParlayResponse }) {
           });
 
           return (
-            <div key={game.id} className="text-sm">
-              <div className="text-xs text-brand-muted mb-0.5">
-                {gameTime} EST
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span
-                    className={resultColor}
-                    dangerouslySetInnerHTML={{ __html: resultIcon }}
-                  />
-                  <span className="truncate">
-                    <span
-                      className={
-                        game.pickedTeam === game.homeTeam
-                          ? "text-white font-medium"
-                          : "text-gray-500"
-                      }
-                    >
-                      {game.homeTeam}
-                    </span>
-                    <span className="text-brand-muted mx-1">vs</span>
-                    <span
-                      className={
-                        game.pickedTeam === game.awayTeam
-                          ? "text-white font-medium"
-                          : "text-gray-500"
-                      }
-                    >
-                      {game.awayTeam}
-                    </span>
-                  </span>
-                </div>
-                {game.homeScore !== null && game.awayScore !== null && (
-                  <span className="font-mono text-xs text-brand-muted ml-2">
-                    {game.homeScore}-{game.awayScore}
-                  </span>
-                )}
-              </div>
+            <div key={game.id} className="flex items-center gap-2 text-sm">
+              <span
+                className={resultColor}
+                dangerouslySetInnerHTML={{ __html: resultIcon }}
+              />
+              <span className="text-[11px] text-brand-muted leading-tight min-w-[52px] shrink-0">
+                {gameTime.split(",").slice(0, 2).join(",").trim()}
+                <br />
+                {gameTime.split(",").slice(2).join(",").trim()} ET
+              </span>
+              <span className="truncate flex-1 min-w-0">
+                <span
+                  className={
+                    game.pickedTeam === game.homeTeam
+                      ? "text-white font-medium"
+                      : "text-gray-500"
+                  }
+                >
+                  {game.homeTeam}
+                </span>
+                <span className="text-brand-muted mx-1">vs</span>
+                <span
+                  className={
+                    game.pickedTeam === game.awayTeam
+                      ? "text-white font-medium"
+                      : "text-gray-500"
+                  }
+                >
+                  {game.awayTeam}
+                </span>
+              </span>
+              {game.gameStatus === "COMPLETED" && game.homeScore !== null && game.awayScore !== null && (
+                <span className="font-mono text-xs text-brand-muted ml-auto shrink-0">
+                  Final: {game.homeScore}-{game.awayScore}
+                </span>
+              )}
             </div>
           );
         })}

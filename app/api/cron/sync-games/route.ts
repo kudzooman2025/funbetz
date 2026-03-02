@@ -81,12 +81,19 @@ async function syncLeagueRounds(
             homeScore: gameData.homeScore,
             awayScore: gameData.awayScore,
             status: gameData.status,
-            completedAt: gameData.completedAt,
             homeTeamBadge: gameData.homeTeamBadge,
             awayTeamBadge: gameData.awayTeamBadge,
           },
           create: gameData,
         });
+
+        // Set completedAt only once (first time game is marked completed)
+        if (gameData.status === "COMPLETED") {
+          await prisma.game.updateMany({
+            where: { externalId: gameData.externalId, completedAt: null },
+            data: { completedAt: new Date() },
+          });
+        }
 
         results.synced++;
       }
