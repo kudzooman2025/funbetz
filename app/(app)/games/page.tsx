@@ -18,6 +18,21 @@ const WC_ROUND_NAMES: Record<number, string> = {
   7: "Semifinals & Final",
 };
 
+const PGA_ROUND_NAMES: Record<number, string> = {
+  1: "Round 1 · Thursday",
+  2: "Round 2 · Friday",
+  3: "Round 3 · Saturday (Moving Day)",
+  4: "Round 4 · Sunday (Final Round)",
+};
+
+const LIV_ROUND_NAMES: Record<number, string> = {
+  1: "Round 1 · Friday",
+  2: "Round 2 · Saturday",
+  3: "Round 3 · Sunday (Final Round)",
+};
+
+const GOLF_SPORTS = new Set<LeagueKey>(["PGA", "LIV"]);
+
 function getBettingWindowBounds() {
   const now = new Date();
   const start = new Date(now.getTime() + GAME_BUFFER_HOURS * 60 * 60 * 1000);
@@ -52,6 +67,7 @@ function GamesContent() {
     .filter((s) => LEAGUE_KEYS.includes(s as LeagueKey)) as LeagueKey[];
 
   const isWorldCupOnly = sportKeys.length === 1 && sportKeys[0] === "WORLD_CUP";
+  const isGolfOnly = sportKeys.length > 0 && sportKeys.every((k) => GOLF_SPORTS.has(k));
 
   const [games, setGames] = useState<GameResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +123,19 @@ function GamesContent() {
     }
   }
 
+  // For golf: group by tournament (league) → round
+  // Structure: { "The Masters 2026": { 1: [...], 2: [...] }, ... }
+  const golfByTournament: Record<string, { sport: LeagueKey; rounds: Record<number, GameResponse[]> }> = {};
+  if (isGolfOnly) {
+    for (const game of games) {
+      const tName = game.league;
+      const r = game.round ?? 1;
+      if (!golfByTournament[tName]) golfByTournament[tName] = { sport: game.sport, rounds: {} };
+      if (!golfByTournament[tName].rounds[r]) golfByTournament[tName].rounds[r] = [];
+      golfByTournament[tName].rounds[r].push(game);
+    }
+  }
+
   const sportLabel =
     sportKeys.length === 1
       ? LEAGUES[sportKeys[0]].name
@@ -154,6 +183,76 @@ function GamesContent() {
           <p className="text-brand-muted text-sm mt-2">
             Games appear when they&apos;re scheduled within the current betting window.
           </p>
+        </div>
+      ) : isGolfOnly ? (
+        /* ── Golf: grouped by tournament → round ── */
+        <div className="space-y-10">
+          {Object.entries(golfByTournament).map(([tournamentName, { sport, rounds }]) => {
+            const roundNames = sport === "LIV" ? LIV_ROUND_NAMES : PGA_ROUND_NAMES;
+            const sortedRounds = Object.keys(rounds).map(Number).sort((a, b) => a - b);
+            return (
+              <div key={tournamentName}>
+                {/* Tournament header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">⛳</span>
+                  <div>
+                    <h2 className="text-lg font-bold">{tournamentName}</h2>
+                    <p className="text-xs text-brand-muted">
+                      {sport === "LIV" ? "LIV Golf · 54-hole individual stroke play" : "PGA Tour · Round leader matchups"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {sortedRounds.map((roundNum) => {
+                    const roundGames = rounds[roundNum];
+                    const roundLabel = roundNames[roundNum] ?? `Round ${roundNum}`;
+                    return (
+                      <div key={roundNum}>
+                        <p className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
+                          {roundLabel}
+                        </p>
+                        <div className="space-y-2">
+                          {roundGames.map((game) => {
+                            const isSelected = selectedGames.some((g) => g.gameId === game.id);
+                            const selectedPick = selectedGames.find((g) => g.gameId === game.id)?.pickedTeam;
+                            const atMax = selectedCount >= MAX_PARLAY_GAMES && !isSelected;
+                            return (
+                              <GameRow
+                                key={game.id}
+                                game={game}
+                                isSelected={isSelected}
+                                selectedPick={selectedPick}
+                                disabled={atMax}
+                                bettable={true}
+                                isGolf={true}
+                                onPickHome={() => {
+                                  if (isSelected && selectedPick === game.homeTeam) {
+                                    removeGame(game.id);
+                                  } else {
+                                    if (isSelected) removeGame(game.id);
+                                    addGame({ gameId: game.id, homeTeam: game.homeTeam, awayTeam: game.awayTeam, homeTeamBadge: game.homeTeamBadge, awayTeamBadge: game.awayTeamBadge, scheduledStart: game.scheduledStart }, game.homeTeam);
+                                  }
+                                }}
+                                onPickAway={() => {
+                                  if (isSelected && selectedPick === game.awayTeam) {
+                                    removeGame(game.id);
+                                  } else {
+                                    if (isSelected) removeGame(game.id);
+                                    addGame({ gameId: game.id, homeTeam: game.homeTeam, awayTeam: game.awayTeam, homeTeamBadge: game.homeTeamBadge, awayTeamBadge: game.awayTeamBadge, scheduledStart: game.scheduledStart }, game.awayTeam);
+                                  }
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : isWorldCupOnly ? (
         /* ── World Cup: grouped by round with bettable/locked state ── */
@@ -415,6 +514,7 @@ function GameRow({
   selectedPick,
   disabled,
   bettable,
+  isGolf = false,
   onPickHome,
   onPickAway,
 }: {
@@ -423,6 +523,7 @@ function GameRow({
   selectedPick?: string;
   disabled: boolean;
   bettable: boolean;
+  isGolf?: boolean;
   onPickHome: () => void;
   onPickAway: () => void;
 }) {
@@ -494,7 +595,9 @@ function GameRow({
           {game.homeTeam}
         </button>
 
-        <span className="text-brand-muted text-xs font-medium">VS</span>
+        <span className="text-brand-muted text-xs font-medium">
+          {isGolf ? "🏌" : "VS"}
+        </span>
 
         {/* Away team pick */}
         <button

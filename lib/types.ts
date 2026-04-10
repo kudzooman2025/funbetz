@@ -3,6 +3,7 @@ import type { LeagueKey } from "./constants";
 export interface GameResponse {
   id: string;
   sport: LeagueKey;
+  league: string;
   homeTeam: string;
   awayTeam: string;
   homeTeamBadge: string | null;

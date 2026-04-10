@@ -21,6 +21,8 @@ export async function POST(req: Request) {
   try {
     // Sync all leagues with rate limiting between each
     for (const key of LEAGUE_KEYS) {
+      // Golf leagues are manually seeded; skip auto-sync
+      if ((LEAGUES[key] as { skipSync?: boolean }).skipSync) continue;
       await syncLeagueRounds(key, results);
       await delay(2500);
     }

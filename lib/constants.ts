@@ -102,6 +102,32 @@ export const LEAGUES = {
     completedStatuses: ["Match Finished", "FT", "AET", "PEN"],
     featured: true,
   },
+  PGA: {
+    id: "4452",
+    strSport: "Golf",
+    season: "2025-2026",
+    name: "PGA Tour",
+    emoji: "\u26F3",
+    description: "Pick round leaders in PGA Tour player matchups",
+    seasonStart: "2025-10-02",
+    totalRounds: 160,
+    roundsPerWeek: 4,
+    completedStatuses: ["Round Over", "Final"],
+    skipSync: true,
+  },
+  LIV: {
+    id: "0",
+    strSport: "Golf",
+    season: "2026",
+    name: "LIV Golf",
+    emoji: "\u26F3",
+    description: "Pick round leaders in LIV Golf player matchups",
+    seasonStart: "2026-02-06",
+    totalRounds: 48,
+    roundsPerWeek: 3,
+    completedStatuses: ["Round Over", "Final"],
+    skipSync: true,
+  },
 } as const;
 
 /** Derived union type of all league keys */

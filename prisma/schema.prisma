@@ -16,6 +16,8 @@ enum Sport {
   NCAAF
   NCAAB
   WORLD_CUP
+  PGA
+  LIV
 }
 
 enum GameStatus {

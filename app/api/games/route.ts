@@ -44,6 +44,7 @@ export async function GET(req: Request) {
     select: {
       id: true,
       sport: true,
+      league: true,
       homeTeam: true,
       awayTeam: true,
       homeTeamBadge: true,
