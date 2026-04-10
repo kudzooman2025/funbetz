@@ -89,6 +89,19 @@ export const LEAGUES = {
     roundsPerWeek: 1,
     completedStatuses: ["Game Over", "FT"],
   },
+  WORLD_CUP: {
+    id: "4484",
+    strSport: "Soccer",
+    season: "2026",
+    name: "FIFA World Cup 2026",
+    emoji: "\uD83C\uDFC6",
+    description: "Pick winners from the 2026 FIFA World Cup",
+    seasonStart: "2026-06-11",
+    totalRounds: 7,
+    roundsPerWeek: 1,
+    completedStatuses: ["Match Finished", "FT", "AET", "PEN"],
+    featured: true,
+  },
 } as const;
 
 /** Derived union type of all league keys */

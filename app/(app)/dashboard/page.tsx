@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
+type LeagueWithFeatured = (typeof LEAGUES)[LeagueKey] & { featured?: boolean };
+
 export default function DashboardPage() {
   const [selected, setSelected] = useState<LeagueKey[]>([]);
   const router = useRouter();
@@ -24,6 +26,9 @@ export default function DashboardPage() {
     router.push(`/games?sports=${selected.join(",")}`);
   };
 
+  const featuredKeys = LEAGUE_KEYS.filter((k) => (LEAGUES[k] as LeagueWithFeatured).featured);
+  const regularKeys = LEAGUE_KEYS.filter((k) => !(LEAGUES[k] as LeagueWithFeatured).featured);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -39,8 +44,48 @@ export default function DashboardPage() {
         Tap to select one or more leagues, then view all available games.
       </p>
 
+      {/* Featured: FIFA World Cup 2026 banner */}
+      {featuredKeys.map((key) => {
+        const league = LEAGUES[key];
+        const isSelected = selected.includes(key);
+        return (
+          <button
+            key={key}
+            onClick={() => toggle(key)}
+            className={`w-full text-left rounded-xl p-5 mb-4 border-2 transition-all relative overflow-hidden ${
+              isSelected
+                ? "border-brand-gold bg-brand-gold/10"
+                : "border-brand-gold/40 bg-gradient-to-r from-brand-card to-brand-gold/5 hover:border-brand-gold/70"
+            }`}
+          >
+            {/* Shimmer strip */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-brand-gold to-transparent opacity-60" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl">{league.emoji}</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h2 className={`font-bold text-base transition-colors ${isSelected ? "text-brand-gold" : "text-white"}`}>
+                      {league.name}
+                    </h2>
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-brand-gold text-brand-dark px-1.5 py-0.5 rounded">
+                      Live Soon
+                    </span>
+                  </div>
+                  <p className="text-brand-muted text-xs">{league.description}</p>
+                  <p className="text-brand-gold/70 text-xs mt-0.5">June 11 – July 19, 2026 &middot; USA, Canada &amp; Mexico</p>
+                </div>
+              </div>
+              {isSelected && (
+                <span className="text-brand-gold text-xl shrink-0">&#10003;</span>
+              )}
+            </div>
+          </button>
+        );
+      })}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {LEAGUE_KEYS.map((key) => {
+        {regularKeys.map((key) => {
           const league = LEAGUES[key];
           const isSelected = selected.includes(key);
           return (

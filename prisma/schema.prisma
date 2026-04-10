@@ -15,6 +15,7 @@ enum Sport {
   NHL
   NCAAF
   NCAAB
+  WORLD_CUP
 }
 
 enum GameStatus {
