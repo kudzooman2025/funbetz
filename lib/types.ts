@@ -9,6 +9,7 @@ export interface GameResponse {
   awayTeamBadge: string | null;
   scheduledStart: string;
   status: string;
+  round: number | null;
 }
 
 export interface ParlayGameResponse {

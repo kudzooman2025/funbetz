@@ -27,15 +27,17 @@ export async function GET(req: Request) {
     sportFilter = requested as LeagueKey[];
   }
 
+  const previewMode = searchParams.get("preview") === "true";
   const { start, end } = getBettingWindow();
 
   const games = await prisma.game.findMany({
     where: {
       ...(sportFilter ? { sport: { in: sportFilter } } : {}),
-      scheduledStart: {
-        gte: start,
-        lte: end,
-      },
+      ...(previewMode
+        ? {}
+        : {
+            scheduledStart: { gte: start, lte: end },
+          }),
       status: "SCHEDULED",
     },
     orderBy: { scheduledStart: "asc" },
@@ -48,6 +50,7 @@ export async function GET(req: Request) {
       awayTeamBadge: true,
       scheduledStart: true,
       status: true,
+      round: true,
     },
   });
 
