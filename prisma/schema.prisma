@@ -40,6 +40,12 @@ enum GamePickResult {
   PUSH
 }
 
+enum TournamentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -49,8 +55,10 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  leaderboardScore LeaderboardScore?
-  parlays          Parlay[]
+  leaderboardScore      LeaderboardScore?
+  parlays               Parlay[]
+  tournamentsCreated    Tournament[]
+  tournamentMemberships TournamentMember[]
 
   @@map("users")
 }
@@ -124,6 +132,52 @@ model ParlayGame {
 
   @@unique([parlayId, gameId])
   @@map("parlay_games")
+}
+
+model Tournament {
+  id          String           @id @default(cuid())
+  name        String
+  inviteCode  String           @unique @map("invite_code")
+  createdById String           @map("created_by_id")
+  startDate   DateTime         @map("start_date")
+  endDate     DateTime         @map("end_date")
+  status      TournamentStatus @default(ACTIVE)
+  description String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  createdBy User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members   TournamentMember[]
+  sports    TournamentSport[]
+
+  @@index([createdById])
+  @@index([inviteCode])
+  @@map("tournaments")
+}
+
+model TournamentMember {
+  id           String   @id @default(cuid())
+  tournamentId String   @map("tournament_id")
+  userId       String   @map("user_id")
+  joinedAt     DateTime @default(now()) @map("joined_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+  @@index([userId])
+  @@map("tournament_members")
+}
+
+model TournamentSport {
+  id           String @id @default(cuid())
+  tournamentId String @map("tournament_id")
+  sport        Sport
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, sport])
+  @@map("tournament_sports")
 }
 
 model ParlayResult {

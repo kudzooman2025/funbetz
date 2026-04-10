@@ -28,7 +28,7 @@ export function Navbar() {
           <Link href="/dashboard" className="text-gray-300 hover:text-brand-green transition-colors">
             Dashboard
           </Link>
-          <Link href="/dashboard" className="text-gray-300 hover:text-brand-green transition-colors">
+          <Link href="/games" className="text-gray-300 hover:text-brand-green transition-colors">
             Games
           </Link>
           <Link href="/parlays" className="text-gray-300 hover:text-brand-green transition-colors">
@@ -36,6 +36,9 @@ export function Navbar() {
           </Link>
           <Link href="/leaderboard" className="text-gray-300 hover:text-brand-green transition-colors">
             Leaderboard
+          </Link>
+          <Link href="/tournaments" className="text-gray-300 hover:text-brand-green transition-colors">
+            Tournaments
           </Link>
         </nav>
 

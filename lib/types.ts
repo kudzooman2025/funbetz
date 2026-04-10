@@ -50,6 +50,34 @@ export interface LeaderboardEntry {
   score: number;
 }
 
+export interface TournamentSummary {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdBy: { id: string; username: string };
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  description: string | null;
+  createdAt: string;
+  sports: string[];
+  memberCount: number;
+  isCreator: boolean;
+  isMember: boolean;
+}
+
+export interface TournamentDetail extends TournamentSummary {
+  members: { userId: string; username: string; joinedAt: string }[];
+}
+
+export interface TournamentLeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  score: number;
+  isCurrentUser: boolean;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
