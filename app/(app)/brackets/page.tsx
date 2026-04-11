@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface BracketSummary {
@@ -15,15 +17,28 @@ interface BracketSummary {
 }
 
 export default function BracketsPage() {
+  const { status } = useSession();
+  const router = useRouter();
   const [brackets, setBrackets] = useState<BracketSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (status !== "authenticated") return;
     fetch("/api/brackets")
-      .then((r) => r.json())
-      .then((d) => { setBrackets(d); setLoading(false); })
+      .then((r) => {
+        if (!r.ok) { setLoading(false); return null; }
+        return r.json();
+      })
+      .then((d) => {
+        if (Array.isArray(d)) setBrackets(d);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
-  }, []);
+  }, [status, router]);
 
   if (loading) {
     return (

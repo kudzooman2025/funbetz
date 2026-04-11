@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   GROUPS, GROUP_KEYS, R16_SEEDS, QF_SEEDS, SF_SEEDS,
   ROUND_POINTS, MAX_SCORE,
@@ -112,6 +113,8 @@ function MatchupPick({
 
 export default function BracketPage() {
   const { id } = useParams<{ id: string }>();
+  const { status } = useSession();
+  const router = useRouter();
   const [challenge, setChallenge] = useState<BracketChallenge | null>(null);
   const [picks, setPicks] = useState<BracketPicks>(EMPTY_PICKS);
   const [saving, setSaving] = useState(false);
@@ -121,12 +124,21 @@ export default function BracketPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(false);
 
+  // Redirect if not logged in
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status, router]);
+
   // Load challenge + existing entry
   useEffect(() => {
-    if (!id) return;
+    if (!id || status !== "authenticated") return;
     fetch(`/api/brackets/${id}`)
-      .then((r) => r.json())
-      .then((c: BracketChallenge) => {
+      .then((r) => {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then((c: BracketChallenge | null) => {
+        if (!c || !c.id) return;
         setChallenge(c);
         if (c.myEntry?.picks) {
           // Merge with EMPTY_PICKS to handle missing keys gracefully
@@ -137,7 +149,7 @@ export default function BracketPage() {
           });
         }
       });
-  }, [id]);
+  }, [id, status]);
 
   const loadLeaderboard = useCallback(() => {
     if (!id) return;
