@@ -74,6 +74,28 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Mobile tab strip — scrollable horizontal nav under the header bar */}
+      <nav className="md:hidden flex overflow-x-auto border-t border-brand-border bg-brand-card scrollbar-hide">
+        <Link href="/dashboard" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          🏠 Home
+        </Link>
+        <Link href="/games" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          🎮 Games
+        </Link>
+        <Link href="/parlays" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          🎟️ Parlays
+        </Link>
+        <Link href="/leaderboard" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          🏆 Ranks
+        </Link>
+        <Link href="/tournaments" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          ⭐ Groups
+        </Link>
+        <Link href="/wallet" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          💰 Wallet
+        </Link>
+      </nav>
     </header>
   );
 }

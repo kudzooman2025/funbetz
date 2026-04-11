@@ -56,6 +56,15 @@ body {
   border-radius: 3px;
 }
 
+/* Hide scrollbar for mobile tab strip */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Input focus styles */
 input:focus,
 select:focus {
