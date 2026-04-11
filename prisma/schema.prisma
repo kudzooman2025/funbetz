@@ -62,6 +62,7 @@ model User {
   parlays               Parlay[]
   tournamentsCreated    Tournament[]
   tournamentMemberships TournamentMember[]
+  bracketEntries        BracketEntry[]
 
   @@map("users")
 }
@@ -181,6 +182,36 @@ model TournamentSport {
 
   @@unique([tournamentId, sport])
   @@map("tournament_sports")
+}
+
+model BracketChallenge {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  sport       Sport
+  lockTime    DateTime @map("lock_time")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  entries BracketEntry[]
+
+  @@map("bracket_challenges")
+}
+
+model BracketEntry {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  challengeId String   @map("challenge_id")
+  picks       Json     @default("{}")
+  score       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge BracketChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([challengeId, score(sort: Desc)])
+  @@map("bracket_entries")
 }
 
 model ParlayResult {

@@ -40,6 +40,9 @@ export function Navbar() {
           <Link href="/tournaments" className="text-gray-300 hover:text-brand-green transition-colors">
             Tournaments
           </Link>
+          <Link href="/brackets" className="text-gray-300 hover:text-brand-green transition-colors">
+            Brackets
+          </Link>
         </nav>
 
         {/* Right side: wallet + user */}
@@ -91,6 +94,9 @@ export function Navbar() {
         </Link>
         <Link href="/tournaments" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
           ⭐ Groups
+        </Link>
+        <Link href="/brackets" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+          🏆 Brackets
         </Link>
         <Link href="/wallet" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
           💰 Wallet
