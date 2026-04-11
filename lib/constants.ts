@@ -128,6 +128,19 @@ export const LEAGUES = {
     completedStatuses: ["Round Over", "Final"],
     skipSync: true,
   },
+  MLSNEXT: {
+    id: "0",
+    strSport: "Soccer",
+    season: "2026",
+    name: "MLS NEXT Cup Qualifier – Virginia Regional",
+    emoji: "\u26BD",
+    description: "Pick winners from U13 Academy Division group play matches",
+    seasonStart: "2026-05-01",
+    totalRounds: 2,
+    roundsPerWeek: 2,
+    completedStatuses: ["Match Finished", "FT"],
+    skipSync: true,
+  },
 } as const;
 
 /** Derived union type of all league keys */

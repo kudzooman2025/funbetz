@@ -18,6 +18,7 @@ enum Sport {
   WORLD_CUP
   PGA
   LIV
+  MLSNEXT
 }
 
 enum GameStatus {
