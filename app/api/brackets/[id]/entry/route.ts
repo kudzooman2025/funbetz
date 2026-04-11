@@ -50,10 +50,12 @@ export async function POST(
     return NextResponse.json({ error: "Invalid picks" }, { status: 400 });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const picksJson = picks as any;
   const entry = await prisma.bracketEntry.upsert({
     where: { userId_challengeId: { userId: session.user.id, challengeId: id } },
-    create: { userId: session.user.id, challengeId: id, picks: picks as unknown as Record<string, unknown> },
-    update: { picks: picks as unknown as Record<string, unknown> },
+    create: { userId: session.user.id, challengeId: id, picks: picksJson },
+    update: { picks: picksJson },
   });
 
   return NextResponse.json(entry);
