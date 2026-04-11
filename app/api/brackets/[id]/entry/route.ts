@@ -52,8 +52,8 @@ export async function POST(
 
   const entry = await prisma.bracketEntry.upsert({
     where: { userId_challengeId: { userId: session.user.id, challengeId: id } },
-    create: { userId: session.user.id, challengeId: id, picks },
-    update: { picks },
+    create: { userId: session.user.id, challengeId: id, picks: picks as unknown as Record<string, unknown> },
+    update: { picks: picks as unknown as Record<string, unknown> },
   });
 
   return NextResponse.json(entry);
