@@ -119,6 +119,8 @@ export default function BracketPage() {
   const [picks, setPicks] = useState<BracketPicks>(EMPTY_PICKS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"bracket" | "leaderboard">("bracket");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -242,6 +244,30 @@ export default function BracketPage() {
     }
   };
 
+  const clearBracket = async () => {
+    if (!id || saving || locked) return;
+    setClearing(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/brackets/${id}/entry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ picks: EMPTY_PICKS }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error || "Failed to clear bracket");
+      } else {
+        setPicks(EMPTY_PICKS);
+        setConfirmClear(false);
+      }
+    } catch {
+      setError("Failed to clear bracket");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   if (!challenge) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -349,7 +375,35 @@ export default function BracketPage() {
             <div className="bg-brand-card border border-brand-border rounded-xl p-3">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-brand-muted">Picks: {progress.made}/{progress.total}</span>
-                {complete && <span className="text-brand-green font-semibold">✓ Complete!</span>}
+                <div className="flex items-center gap-2">
+                  {complete && <span className="text-brand-green font-semibold">✓ Complete!</span>}
+                  {progress.made > 0 && !confirmClear && (
+                    <button
+                      onClick={() => setConfirmClear(true)}
+                      className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                      🗑 Start Over
+                    </button>
+                  )}
+                  {confirmClear && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-red-400">Clear all picks?</span>
+                      <button
+                        onClick={clearBracket}
+                        disabled={clearing}
+                        className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        {clearing ? "Clearing…" : "Yes, clear"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmClear(false)}
+                        className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="h-2 bg-brand-surface rounded-full overflow-hidden">
                 <div
