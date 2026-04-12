@@ -7,7 +7,7 @@
 
 import {
   ROUND_POINTS,
-  QF_SEEDS,
+  QF_SLOTS,
   SF_SEEDS,
   GROUP_KEYS,
   type BracketPicks,
@@ -99,8 +99,8 @@ export function calculateScore(
   }
 
   // Quarterfinals
-  for (const seed of QF_SEEDS) {
-    const key = String(seed.id);
+  for (const slot of QF_SLOTS) {
+    const key = String(slot.id);
     if (results.qf[key] && picks.qf[key] === results.qf[key]) {
       score += ROUND_POINTS.qf;
     }
@@ -133,7 +133,7 @@ export function resultProgress(results: StoredResults): {
 } {
   return {
     groups: GROUP_KEYS.filter((g) => results.groupFirst[g]).length,
-    qf: QF_SEEDS.filter((s) => results.qf[String(s.id)]).length,
+    qf: QF_SLOTS.filter((s) => results.qf[String(s.id)]).length,
     sf: SF_SEEDS.filter((s) => results.sf[String(s.id)]).length,
     final: results.final ? 1 : 0,
   };

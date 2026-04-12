@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  GROUPS, GROUP_KEYS, QF_SEEDS, SF_SEEDS,
+  GROUPS, GROUP_KEYS, QF_SLOTS, SF_SEEDS,
   ROUND_POINTS, MAX_SCORE,
   type BracketPicks, EMPTY_PICKS,
-  getQFTeams, getSFTeams, getFinalTeams,
+  getGroupWinners, getSFTeams, getFinalTeams,
   isComplete, pickProgress,
 } from "@/lib/bracket-config";
 
@@ -172,24 +172,12 @@ export default function BracketPage() {
       const current = p.groups[group] ?? { first: "", second: "" };
       const second = current.second === team ? current.first : current.second;
       const newGroups = { ...p.groups, [group]: { first: team, second } };
-      // Clear QF pick for the match this group feeds into if pick is now invalid
-      const newQF = { ...p.qf };
-      const qfSeed = QF_SEEDS.find((q) => q.home === `${group}1` || q.away === `${group}1`);
-      if (qfSeed) {
-        const qfPick = newQF[String(qfSeed.id)];
-        if (qfPick && qfPick !== team) {
-          // The winner of this group changed — clear QF pick and downstream
-          delete newQF[String(qfSeed.id)];
-          const newSF = { ...p.sf };
-          const sfSeed = SF_SEEDS.find((s) => s.homeQF === qfSeed.id || s.awayQF === qfSeed.id);
-          if (sfSeed) {
-            delete newSF[String(sfSeed.id)];
-            return { ...p, groups: newGroups, qf: newQF, sf: newSF, final: "" };
-          }
-          return { ...p, groups: newGroups, qf: newQF, sf: newSF };
-        }
+      // Changing any group winner shifts ALL seedings → clear all QF/SF/Final picks
+      // (seedings are determined cross-group by PPM, not by adjacent groups)
+      if (current.first !== team) {
+        return { ...p, groups: newGroups, qf: {}, sf: {}, final: "" };
       }
-      return { ...p, groups: newGroups, qf: newQF };
+      return { ...p, groups: newGroups };
     });
   };
 
@@ -442,23 +430,48 @@ export default function BracketPage() {
 
           {/* ── QUARTERFINALS ───────────────────────────────────────────── */}
           <section>
-            <h2 className="text-sm font-bold text-brand-muted uppercase tracking-widest mb-3">
+            <h2 className="text-sm font-bold text-brand-muted uppercase tracking-widest mb-1">
               Quarterfinals — +{ROUND_POINTS.qf}pt each
             </h2>
+            <p className="text-[11px] text-brand-muted mb-3">
+              Seedings (#1–#8) are determined after group play by PPM → Goal Diff → Goals For.
+              Pick who you think wins each seed matchup from your predicted group winners.
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {QF_SEEDS.map((seed) => {
-                const [home, away] = getQFTeams(seed.id, picks);
+              {QF_SLOTS.map((slot) => {
+                const groupWinners = getGroupWinners(picks).filter(Boolean);
+                const pickedTeam = picks.qf[String(slot.id)] || "";
                 return (
-                  <MatchupPick
-                    key={seed.id}
-                    label={`QF: Grp ${seed.home[0]} vs ${seed.away[0]}`}
-                    home={home}
-                    away={away}
-                    picked={picks.qf[String(seed.id)] || ""}
-                    locked={locked}
-                    pointValue={ROUND_POINTS.qf}
-                    onPick={(t) => setQFPick(seed.id, t)}
-                  />
+                  <div key={slot.id} className="bg-brand-card border border-brand-border rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-brand-muted font-medium uppercase tracking-wide">
+                        QF {slot.id}
+                      </span>
+                      <span className="text-[10px] text-brand-gold">+{ROUND_POINTS.qf}pt</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 font-semibold">{slot.label}</div>
+                    {groupWinners.length < 8 && (
+                      <p className="text-[10px] text-amber-500 italic">Pick all 8 group winners first</p>
+                    )}
+                    <select
+                      disabled={locked || groupWinners.length < 8}
+                      value={pickedTeam}
+                      onChange={(e) => setQFPick(slot.id, e.target.value)}
+                      className={`w-full text-xs rounded-lg px-2 py-1.5 border focus:outline-none truncate ${
+                        pickedTeam
+                          ? "bg-brand-green/10 border-brand-green text-brand-green font-semibold"
+                          : "bg-brand-surface border-brand-border text-gray-400"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <option value="">— pick winner —</option>
+                      {groupWinners.map((team) => (
+                        <option key={team} value={team}>{team}</option>
+                      ))}
+                    </select>
+                    {pickedTeam && (
+                      <div className="text-[10px] text-brand-green truncate">✓ {pickedTeam.split(" ")[0]}</div>
+                    )}
+                  </div>
                 );
               })}
             </div>

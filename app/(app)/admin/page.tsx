@@ -13,7 +13,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { GROUPS, QF_SEEDS, SF_SEEDS } from "@/lib/bracket-config";
+import { GROUPS, QF_SLOTS, SF_SEEDS } from "@/lib/bracket-config";
 
 const CHALLENGE_ID = "va26-u13-ad";
 
@@ -29,12 +29,9 @@ interface ResultRow {
 // All teams in tournament, grouped for convenient dropdowns
 const ALL_TEAMS = Object.values(GROUPS).flat();
 
-function teamsForQF(seedKey: string): string[] {
-  const seed = QF_SEEDS.find((s) => String(s.id) === seedKey);
-  if (!seed) return ALL_TEAMS;
-  const homeGroup = seed.home[0]; // "A", "C", etc.
-  const awayGroup = seed.away[0];
-  return [...(GROUPS[homeGroup] ?? []), ...(GROUPS[awayGroup] ?? [])];
+// QF teams can come from any group (seed-based, not adjacent-group-based)
+function teamsForQF(_seedKey: string): string[] {
+  return ALL_TEAMS;
 }
 
 export default function AdminPage() {
@@ -278,10 +275,10 @@ export default function AdminPage() {
       {/* Quarterfinals */}
       <KnockoutSection
         title="Quarterfinals"
-        seeds={QF_SEEDS.map((s) => ({
+        seeds={QF_SLOTS.map((s) => ({
           round: "qf",
           key: String(s.id),
-          label: `QF ${s.id}: Grp ${s.home[0]} vs Grp ${s.away[0]}`,
+          label: `QF ${s.id}: ${s.label}`,
           teams: teamsForQF(String(s.id)),
         }))}
         pending={pendingKO}

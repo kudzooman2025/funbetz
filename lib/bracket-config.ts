@@ -34,15 +34,33 @@ export const GROUPS: Record<string, string[]> = {
 export const GROUP_KEYS = Object.keys(GROUPS) as string[];
 
 /**
- * QF seeding — only GROUP WINNERS advance.
- * Adjacent groups face each other: A vs B, C vs D, E vs F, G vs H.
+ * QF seeding — Wildcard Cross-Group Ranking Algorithm (per MLS NEXT rules).
+ *
+ * All 8 group winners are ranked #1–#8 by:
+ *   1. Points Per Match (PPM)
+ *   2. Goal Difference Per Match
+ *   3. Goals For Per Match
+ *   4. Fewest Disciplinary Points
+ *
+ * Fixed bracket: #1 vs #8 | #4 vs #5 | #3 vs #6 | #2 vs #7
+ * (higher seed gets favorable draw — seedings NOT known until after group play)
+ *
+ * modular11 match IDs map to QF slots 1–4 in bracket order:
+ *   Slot 1 → 19819 | Slot 2 → 19820 | Slot 3 → 19821 | Slot 4 → 19822
  */
-export const QF_SEEDS: { id: number; home: string; away: string }[] = [
-  { id: 1, home: "A1", away: "B1" },
-  { id: 2, home: "C1", away: "D1" },
-  { id: 3, home: "E1", away: "F1" },
-  { id: 4, home: "G1", away: "H1" },
+export const QF_SLOTS: { id: number; highSeed: number; lowSeed: number; label: string }[] = [
+  { id: 1, highSeed: 1, lowSeed: 8, label: "#1 Seed vs #8 Seed" },
+  { id: 2, highSeed: 4, lowSeed: 5, label: "#4 Seed vs #5 Seed" },
+  { id: 3, highSeed: 3, lowSeed: 6, label: "#3 Seed vs #6 Seed" },
+  { id: 4, highSeed: 2, lowSeed: 7, label: "#2 Seed vs #7 Seed" },
 ];
+
+/** @deprecated — use QF_SLOTS. Kept for any legacy references. */
+export const QF_SEEDS = QF_SLOTS.map((s) => ({
+  id: s.id,
+  home: `SEED${s.highSeed}`,
+  away: `SEED${s.lowSeed}`,
+}));
 
 export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
   { id: 1, homeQF: 1, awayQF: 2 },
@@ -88,7 +106,12 @@ export const EMPTY_PICKS: BracketPicks = {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Resolve a group token like "A1" or "B1" to the team name from user's picks */
+/** All 8 group winners the user has predicted (empty string if not yet picked) */
+export function getGroupWinners(picks: BracketPicks): string[] {
+  return GROUP_KEYS.map((g) => picks.groups[g]?.first ?? "");
+}
+
+/** @deprecated — QF teams are not deterministic from group letters; use getGroupWinners instead */
 export function resolveToken(token: string, picks: BracketPicks): string {
   const group = token[0];
   const place = parseInt(token[1]);
@@ -96,10 +119,9 @@ export function resolveToken(token: string, picks: BracketPicks): string {
   return place === 1 ? picks.groups[group].first : picks.groups[group].second;
 }
 
-/** [home, away] for a QF game, resolved from group winner picks */
-export function getQFTeams(matchId: number, picks: BracketPicks): [string, string] {
-  const seed = QF_SEEDS.find((s) => s.id === matchId)!;
-  return [resolveToken(seed.home, picks), resolveToken(seed.away, picks)];
+/** @deprecated — use QF_SLOTS + getGroupWinners */
+export function getQFTeams(_matchId: number, _picks: BracketPicks): [string, string] {
+  return ["", ""];
 }
 
 export function getSFTeams(matchId: number, picks: BracketPicks): [string, string] {
@@ -118,8 +140,8 @@ export function isComplete(picks: BracketPicks): boolean {
       picks.groups[g]?.second &&
       picks.groups[g].first !== picks.groups[g].second
   );
-  const qfDone    = QF_SEEDS.every((s) => picks.qf[String(s.id)]);
-  const sfDone    = SF_SEEDS.every((s) => picks.sf[String(s.id)]);
+  const qfDone = QF_SLOTS.every((s) => picks.qf[String(s.id)]);
+  const sfDone = SF_SEEDS.every((s) => picks.sf[String(s.id)]);
   return groupsDone && qfDone && sfDone && !!picks.final;
 }
 
@@ -131,7 +153,7 @@ export function pickProgress(picks: BracketPicks): { made: number; total: number
     if (picks.groups[g]?.first)  made++;
     if (picks.groups[g]?.second) made++;
   });
-  QF_SEEDS.forEach((s) => { if (picks.qf[String(s.id)]) made++; });
+  QF_SLOTS.forEach((s) => { if (picks.qf[String(s.id)]) made++; });
   SF_SEEDS.forEach((s) => { if (picks.sf[String(s.id)]) made++; });
   if (picks.final) made++;
   return { made, total };
