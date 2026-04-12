@@ -69,19 +69,17 @@ export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
 
 /** Points per correct pick */
 export const ROUND_POINTS = {
-  groupFirst:  1,
-  groupSecond: 1,
-  qf:          2,
-  sf:          4,
-  final:       8,
+  groupFirst: 1,
+  qf:         2,
+  sf:         4,
+  final:      8,
 };
 
-/** Maximum possible score: 8+8+8+8+8 = 40 */
+/** Maximum possible score: 8+8+8+8 = 32 */
 export const MAX_SCORE =
-  ROUND_POINTS.groupFirst  * 8 +
-  ROUND_POINTS.groupSecond * 8 +
-  ROUND_POINTS.qf          * 4 +
-  ROUND_POINTS.sf          * 2 +
+  ROUND_POINTS.groupFirst * 8 +
+  ROUND_POINTS.qf         * 4 +
+  ROUND_POINTS.sf         * 2 +
   ROUND_POINTS.final;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,14 +87,14 @@ export const MAX_SCORE =
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface BracketPicks {
-  groups: Record<string, { first: string; second: string }>;
-  qf: Record<string, string>;   // matchId (1-4) → team name
+  groups: Record<string, { first: string; second?: string }>;
+  qf: Record<string, string>;   // slotId (1-4) → team name
   sf: Record<string, string>;   // matchId (1-2) → team name
   final: string;
 }
 
 export const EMPTY_PICKS: BracketPicks = {
-  groups: Object.fromEntries(GROUP_KEYS.map((g) => [g, { first: "", second: "" }])),
+  groups: Object.fromEntries(GROUP_KEYS.map((g) => [g, { first: "" }])),
   qf: {},
   sf: {},
   final: "",
@@ -134,27 +132,19 @@ export function getFinalTeams(picks: BracketPicks): [string, string] {
 }
 
 export function isComplete(picks: BracketPicks): boolean {
-  const groupsDone = GROUP_KEYS.every(
-    (g) =>
-      picks.groups[g]?.first &&
-      picks.groups[g]?.second &&
-      picks.groups[g].first !== picks.groups[g].second
-  );
-  const qfDone = QF_SLOTS.every((s) => picks.qf[String(s.id)]);
-  const sfDone = SF_SEEDS.every((s) => picks.sf[String(s.id)]);
+  const groupsDone = GROUP_KEYS.every((g) => !!picks.groups[g]?.first);
+  const qfDone     = QF_SLOTS.every((s) => picks.qf[String(s.id)]);
+  const sfDone     = SF_SEEDS.every((s) => picks.sf[String(s.id)]);
   return groupsDone && qfDone && sfDone && !!picks.final;
 }
 
-/** 8×2 group picks + 4 QF + 2 SF + 1 Final = 23 total */
+/** 8 group winners + 4 QF + 2 SF + 1 Final = 15 total picks */
 export function pickProgress(picks: BracketPicks): { made: number; total: number } {
-  const total = 8 * 2 + 4 + 2 + 1;
+  const total = 8 + 4 + 2 + 1;
   let made = 0;
-  GROUP_KEYS.forEach((g) => {
-    if (picks.groups[g]?.first)  made++;
-    if (picks.groups[g]?.second) made++;
-  });
-  QF_SLOTS.forEach((s) => { if (picks.qf[String(s.id)]) made++; });
-  SF_SEEDS.forEach((s) => { if (picks.sf[String(s.id)]) made++; });
+  GROUP_KEYS.forEach((g) => { if (picks.groups[g]?.first) made++; });
+  QF_SLOTS.forEach((s)    => { if (picks.qf[String(s.id)]) made++; });
+  SF_SEEDS.forEach((s)    => { if (picks.sf[String(s.id)]) made++; });
   if (picks.final) made++;
   return { made, total };
 }

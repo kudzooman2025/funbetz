@@ -82,19 +82,13 @@ export function calculateScore(
 ): number {
   let score = 0;
 
-  // Group stage
+  // Group stage — only group winners scored
   for (const group of GROUP_KEYS) {
     if (
       results.groupFirst[group] &&
       picks.groups[group]?.first === results.groupFirst[group]
     ) {
       score += ROUND_POINTS.groupFirst;
-    }
-    if (
-      results.groupSecond[group] &&
-      picks.groups[group]?.second === results.groupSecond[group]
-    ) {
-      score += ROUND_POINTS.groupSecond;
     }
   }
 

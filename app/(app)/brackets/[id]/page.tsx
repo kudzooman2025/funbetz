@@ -183,14 +183,6 @@ export default function BracketPage() {
     });
   };
 
-  const setGroupSecond = (group: string, team: string) => {
-    setPicks((p) => {
-      const current = p.groups[group] ?? { first: "", second: "" };
-      const first = current.first === team ? current.second : current.first;
-      return { ...p, groups: { ...p.groups, [group]: { first, second: team } } };
-    });
-  };
-
   const setQFPick = (matchId: number, team: string) => {
     setPicks((p) => {
       const newQF = { ...p.qf, [String(matchId)]: team };
@@ -306,7 +298,7 @@ export default function BracketPage() {
         <div className="text-xs text-brand-muted font-medium mb-2">Point values (max {MAX_SCORE} pts)</div>
         <div className="flex flex-wrap gap-2 text-xs">
           {[
-            { label: "Group 1st/2nd", pts: ROUND_POINTS.groupFirst },
+            { label: "Group Winner", pts: ROUND_POINTS.groupFirst },
             { label: "Quarterfinals", pts: ROUND_POINTS.qf },
             { label: "Semifinals", pts: ROUND_POINTS.sf },
             { label: "Champion", pts: ROUND_POINTS.final },
@@ -417,65 +409,41 @@ export default function BracketPage() {
           {/* ── GROUP STAGE ─────────────────────────────────────────────── */}
           <section>
             <h2 className="text-sm font-bold text-brand-muted uppercase tracking-widest mb-3">
-              Group Stage — Predict 1st & 2nd
+              Group Stage — Pick the Winner (+{ROUND_POINTS.groupFirst}pt each)
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {GROUP_KEYS.map((g) => {
                 const teams = GROUPS[g];
-                const gPicks = picks.groups[g] ?? { first: "", second: "" };
+                const gFirst = picks.groups[g]?.first ?? "";
                 return (
                   <div key={g} className="bg-brand-card border border-brand-border rounded-xl p-3 space-y-2">
                     <div className="text-xs font-bold text-brand-gold uppercase">Group {g}</div>
                     <div className="space-y-1.5">
                       {teams.map((team) => {
-                        const isFirst = gPicks.first === team;
-                        const isSecond = gPicks.second === team;
+                        const isFirst = gFirst === team;
                         return (
-                          <div key={team} className="flex gap-1">
-                            <button
-                              title="Pick 1st"
-                              disabled={locked}
-                              onClick={() => setGroupFirst(g, team)}
-                              className={`w-6 h-6 rounded text-[10px] font-bold border shrink-0 transition-colors ${
-                                isFirst
-                                  ? "bg-brand-green text-black border-brand-green"
-                                  : locked
-                                  ? "bg-brand-surface border-brand-border text-brand-muted cursor-not-allowed"
-                                  : "bg-brand-surface border-brand-border text-brand-muted hover:border-brand-green"
-                              }`}
-                            >
-                              1
-                            </button>
-                            <button
-                              title="Pick 2nd"
-                              disabled={locked}
-                              onClick={() => setGroupSecond(g, team)}
-                              className={`w-6 h-6 rounded text-[10px] font-bold border shrink-0 transition-colors ${
-                                isSecond
-                                  ? "bg-brand-gold text-black border-brand-gold"
-                                  : locked
-                                  ? "bg-brand-surface border-brand-border text-brand-muted cursor-not-allowed"
-                                  : "bg-brand-surface border-brand-border text-brand-muted hover:border-brand-gold"
-                              }`}
-                            >
-                              2
-                            </button>
-                            <span
-                              className={`text-xs flex-1 min-w-0 truncate flex items-center ${
-                                isFirst ? "text-brand-green font-semibold" : isSecond ? "text-brand-gold font-semibold" : "text-gray-400"
-                              }`}
-                            >
-                              {team}
-                            </span>
-                          </div>
+                          <button
+                            key={team}
+                            disabled={locked}
+                            onClick={() => setGroupFirst(g, team)}
+                            className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors border truncate ${
+                              isFirst
+                                ? "bg-brand-green/20 border-brand-green text-brand-green font-semibold"
+                                : locked
+                                ? "bg-brand-surface border-brand-border text-brand-muted cursor-not-allowed"
+                                : "bg-brand-surface border-brand-border text-gray-300 hover:border-brand-green hover:text-brand-green cursor-pointer"
+                            }`}
+                          >
+                            {isFirst ? "✓ " : ""}{team}
+                          </button>
                         );
                       })}
                     </div>
-                    <div className="text-[10px] text-brand-muted pt-1 border-t border-brand-border">
-                      {gPicks.first ? <span className="text-brand-green">1st: {gPicks.first.split(" ")[0]}</span> : <span>1st: —</span>}
-                      {" · "}
-                      {gPicks.second ? <span className="text-brand-gold">2nd: {gPicks.second.split(" ")[0]}</span> : <span>2nd: —</span>}
-                    </div>
+                    {gFirst && (
+                      <div className="text-[10px] text-brand-green pt-1 border-t border-brand-border truncate">
+                        Winner: {gFirst.split(" ")[0]}
+                      </div>
+                    )}
                   </div>
                 );
               })}
