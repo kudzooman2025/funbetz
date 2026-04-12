@@ -58,6 +58,8 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  isAdmin Boolean @default(false) @map("is_admin")
+
   leaderboardScore      LeaderboardScore?
   parlays               Parlay[]
   tournamentsCreated    Tournament[]
@@ -193,8 +195,24 @@ model BracketChallenge {
   createdAt   DateTime @default(now()) @map("created_at")
 
   entries BracketEntry[]
+  results BracketResult[]
 
   @@map("bracket_challenges")
+}
+
+model BracketResult {
+  id          String   @id @default(cuid())
+  challengeId String   @map("challenge_id")
+  round       String   // "group" | "group2" | "qf" | "sf" | "final"
+  key         String   // group: "A".."H"; qf: "1".."4"; sf: "1".."2"; final: "1"
+  winner      String
+  source      String   @default("manual") // "scraper" | "manual"
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  challenge BracketChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, round, key])
+  @@map("bracket_results")
 }
 
 model BracketEntry {

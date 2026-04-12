@@ -41,6 +41,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.username = user.name;
+        // Fetch isAdmin fresh from DB at login time
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { isAdmin: true },
+        });
+        token.isAdmin = dbUser?.isAdmin ?? false;
       }
       return token;
     },
@@ -48,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
+        session.user.isAdmin = token.isAdmin ?? false;
       }
       return session;
     },
