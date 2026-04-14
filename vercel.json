@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/sync-bracket",
-      "schedule": "*/30 * 3-4 5 *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
