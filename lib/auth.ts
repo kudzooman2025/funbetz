@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
-        session.user.isAdmin = token.isAdmin ?? false;
+        session.user.isAdmin = Boolean(token.isAdmin);
       }
       return session;
     },
