@@ -66,6 +66,15 @@ export function Navbar() {
                 >
                   Wallet
                 </Link>
+                {session?.user?.isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 text-sm text-brand-green hover:bg-brand-surface"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    ⚙️ Admin
+                  </Link>
+                )}
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-brand-surface"
