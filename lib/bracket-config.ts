@@ -161,7 +161,7 @@ export function resolveToken(token: string, picks: BracketPicks): string {
   const group = token[0];
   const place = parseInt(token[1]);
   if (!picks.groups[group]) return token;
-  return place === 1 ? picks.groups[group].first : picks.groups[group].second;
+  return place === 1 ? picks.groups[group].first : (picks.groups[group].second ?? "");
 }
 
 /** @deprecated — use QF_SLOTS + getGroupWinners */
