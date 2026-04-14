@@ -34,6 +34,53 @@ export const GROUPS: Record<string, string[]> = {
 export const GROUP_KEYS = Object.keys(GROUPS) as string[];
 
 /**
+ * National MLS NEXT rankings as of April 14, 2026.
+ * Source: MLSN Cup Virginia Regional May 1–4 2026 spreadsheet.
+ * Lower number = higher rank (e.g., #194 FC DELCO is the top-ranked team).
+ */
+export const TEAM_RANKINGS: Record<string, number> = {
+  // Group A
+  "Carolina Velocity FC":          207,
+  "Springfield SYC":               378,
+  "Cedar Stars Academy Monmouth": 3894,
+  "Bethesda SC":                   634,
+  // Group B
+  "Alexandria SA":                 528,
+  "Carolina Core FC":             1050,
+  "West Virginia Soccer":         1547,
+  // Group C
+  "FC DELCO":                      194,
+  "The Football Academy":          623,
+  "The St. James FC":              765,
+  "Triangle United SA":           1907,
+  // Group D
+  "Baltimore Armour":              481,
+  "Ironbound Soccer Club":         461,
+  "FC Richmond":                   875,
+  "PA Classics Harrisburg":       1940,
+  // Group E
+  "Coppermine SC":                 331,
+  "PDA Hibernian":                 909,
+  "Fox Soccer Academy Carolinas":  656,
+  "Virginia Rush":                2687,
+  // Group F
+  "McLean Youth Soccer":           502,
+  "Trenton City Soccer Club":     1168,
+  "Queen City Mutiny FC":          652,
+  "PA Classics":                  1670,
+  // Group G
+  "Loudoun Soccer Club":           390,
+  "Real Futbol Academy":           844,
+  "Wake FC":                      1826,
+  "Keystone FC":                  1858,
+  // Group H
+  "Charlotte Independence SC":     696,
+  "Players Development Academy":   477,
+  "Virginia Revolution SC":       1470,
+  "Sporting Athletic Club":       1863,
+};
+
+/**
  * QF seeding — Wildcard Cross-Group Ranking Algorithm (per MLS NEXT rules).
  *
  * All 8 group winners are ranked #1–#8 by:

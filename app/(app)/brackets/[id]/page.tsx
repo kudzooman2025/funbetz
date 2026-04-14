@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   GROUPS, GROUP_KEYS, QF_SLOTS, SF_SEEDS,
-  ROUND_POINTS, MAX_SCORE,
+  ROUND_POINTS, MAX_SCORE, TEAM_RANKINGS,
   type BracketPicks, EMPTY_PICKS,
   getGroupWinners, getSFTeams, getFinalTeams,
   isComplete, pickProgress,
@@ -421,12 +421,13 @@ export default function BracketPage() {
                     <div className="space-y-1.5">
                       {teams.map((team) => {
                         const isFirst = gFirst === team;
+                        const rank = TEAM_RANKINGS[team];
                         return (
                           <button
                             key={team}
                             disabled={locked}
                             onClick={() => setGroupFirst(g, team)}
-                            className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors border truncate ${
+                            className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors border ${
                               isFirst
                                 ? "bg-brand-green/20 border-brand-green text-brand-green font-semibold"
                                 : locked
@@ -434,7 +435,16 @@ export default function BracketPage() {
                                 : "bg-brand-surface border-brand-border text-gray-300 hover:border-brand-green hover:text-brand-green cursor-pointer"
                             }`}
                           >
-                            {isFirst ? "✓ " : ""}{team}
+                            <span className="flex items-center justify-between gap-1">
+                              <span className="truncate">{isFirst ? "✓ " : ""}{team}</span>
+                              {rank && (
+                                <span className={`shrink-0 text-[9px] font-bold px-1 py-0.5 rounded ${
+                                  isFirst ? "bg-brand-green/30 text-brand-green" : "bg-brand-card text-brand-muted"
+                                }`}>
+                                  #{rank}
+                                </span>
+                              )}
+                            </span>
                           </button>
                         );
                       })}
@@ -486,9 +496,14 @@ export default function BracketPage() {
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <option value="">— pick winner —</option>
-                      {groupWinners.map((team) => (
-                        <option key={team} value={team}>{team}</option>
-                      ))}
+                      {groupWinners.map((team) => {
+                        const rank = TEAM_RANKINGS[team];
+                        return (
+                          <option key={team} value={team}>
+                            {team}{rank ? ` (#${rank})` : ""}
+                          </option>
+                        );
+                      })}
                     </select>
                     {pickedTeam && (
                       <div className="text-[10px] text-brand-green truncate">✓ {pickedTeam.split(" ")[0]}</div>
