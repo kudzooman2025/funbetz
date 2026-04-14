@@ -70,7 +70,7 @@ export default function AdminPage() {
         // Pre-fill pending selects from stored values
         const ko: Record<string, string> = {};
         for (const r of data) {
-          if (["qf", "sf", "final"].includes(r.round)) {
+          if (["qf", "sf", "final", "qf_home", "qf_away", "sf_home", "sf_away", "final_home", "final_away"].includes(r.round)) {
             ko[`${r.round}_${r.key}`] = r.winner;
           }
         }
@@ -162,6 +162,17 @@ export default function AdminPage() {
     } catch (err) {
       addLog(`Clear failed: ${String(err)}`);
     }
+  }
+
+  // ── Matchup save/clear helpers ────────────────────────────────────────────
+  async function saveMatchup(homeRound: string, awayRound: string, key: string) {
+    await saveResult(homeRound, key);
+    await saveResult(awayRound, key);
+  }
+
+  async function clearMatchup(homeRound: string, awayRound: string, key: string) {
+    await clearResult(homeRound, key);
+    await clearResult(awayRound, key);
   }
 
   // ── Recalculate scores ─────────────────────────────────────────────────────
@@ -272,6 +283,63 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* QF Matchup Setup */}
+      <MatchupSection
+        title="QF Matchups"
+        subtitle="Set which two teams play in each QF slot"
+        slots={QF_SLOTS.map((s) => ({
+          key: String(s.id),
+          label: `QF Slot ${s.id}: ${s.label}`,
+          homeRound: "qf_home",
+          awayRound: "qf_away",
+        }))}
+        teams={ALL_TEAMS}
+        pending={pendingKO}
+        setPending={setPendingKO}
+        storedWinner={storedWinner}
+        saving={saving}
+        onSave={saveMatchup}
+        onClear={clearMatchup}
+      />
+
+      {/* SF Matchup Setup */}
+      <MatchupSection
+        title="SF Matchups"
+        subtitle="Set which two teams play in each SF slot"
+        slots={SF_SEEDS.map((s) => ({
+          key: String(s.id),
+          label: `SF ${s.id}: Winner QF${s.homeQF} vs Winner QF${s.awayQF}`,
+          homeRound: "sf_home",
+          awayRound: "sf_away",
+        }))}
+        teams={ALL_TEAMS}
+        pending={pendingKO}
+        setPending={setPendingKO}
+        storedWinner={storedWinner}
+        saving={saving}
+        onSave={saveMatchup}
+        onClear={clearMatchup}
+      />
+
+      {/* Final Matchup Setup */}
+      <MatchupSection
+        title="Final Matchup"
+        subtitle="Set which two teams play in the Final"
+        slots={[{
+          key: "1",
+          label: "Championship Final",
+          homeRound: "final_home",
+          awayRound: "final_away",
+        }]}
+        teams={ALL_TEAMS}
+        pending={pendingKO}
+        setPending={setPendingKO}
+        storedWinner={storedWinner}
+        saving={saving}
+        onSave={saveMatchup}
+        onClear={clearMatchup}
+      />
+
       {/* Quarterfinals */}
       <KnockoutSection
         title="Quarterfinals"
@@ -335,6 +403,106 @@ export default function AdminPage() {
         </section>
       )}
     </div>
+  );
+}
+
+// ── MatchupSection component ─────────────────────────────────────────────────
+
+interface MatchupSlot {
+  key: string;
+  label: string;
+  homeRound: string;
+  awayRound: string;
+}
+
+function MatchupSection({
+  title,
+  subtitle,
+  slots,
+  teams,
+  pending,
+  setPending,
+  storedWinner,
+  saving,
+  onSave,
+  onClear,
+}: {
+  title: string;
+  subtitle: string;
+  slots: MatchupSlot[];
+  teams: string[];
+  pending: Record<string, string>;
+  setPending: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  storedWinner: (round: string, key: string) => ResultRow | undefined;
+  saving: string | null;
+  onSave: (homeRound: string, awayRound: string, key: string) => Promise<void>;
+  onClear: (homeRound: string, awayRound: string, key: string) => Promise<void>;
+}) {
+  return (
+    <section className="bg-gray-800 rounded-xl p-5 space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+      </div>
+      <div className="space-y-3">
+        {slots.map(({ key, label, homeRound, awayRound }) => {
+          const homeStateKey = `${homeRound}_${key}`;
+          const awayStateKey = `${awayRound}_${key}`;
+          const storedHome = storedWinner(homeRound, key);
+          const storedAway = storedWinner(awayRound, key);
+          const isSaving = saving === homeStateKey || saving === awayStateKey;
+          const canSave = !!pending[homeStateKey] && !!pending[awayStateKey];
+
+          return (
+            <div key={key} className="bg-gray-900 rounded-lg p-4 space-y-2">
+              <p className="text-sm text-gray-300 font-medium">{label}</p>
+              {storedHome && storedAway && (
+                <p className="text-xs text-brand-green">
+                  Current: <span className="font-semibold">{storedHome.winner}</span>
+                  {" vs "}
+                  <span className="font-semibold">{storedAway.winner}</span>
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={pending[homeStateKey] ?? ""}
+                  onChange={(e) => setPending((p) => ({ ...p, [homeStateKey]: e.target.value }))}
+                  className="bg-gray-700 text-white text-sm rounded-lg px-3 py-2 border border-gray-600 focus:border-brand-green focus:outline-none min-w-[190px]"
+                >
+                  <option value="">— Team 1 —</option>
+                  {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <span className="text-gray-500 text-sm font-medium">vs</span>
+                <select
+                  value={pending[awayStateKey] ?? ""}
+                  onChange={(e) => setPending((p) => ({ ...p, [awayStateKey]: e.target.value }))}
+                  className="bg-gray-700 text-white text-sm rounded-lg px-3 py-2 border border-gray-600 focus:border-brand-green focus:outline-none min-w-[190px]"
+                >
+                  <option value="">— Team 2 —</option>
+                  {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <button
+                  onClick={() => onSave(homeRound, awayRound, key)}
+                  disabled={!canSave || isSaving}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+                >
+                  {isSaving ? "Saving…" : "Save Matchup"}
+                </button>
+                {(storedHome || storedAway) && (
+                  <button
+                    onClick={() => onClear(homeRound, awayRound, key)}
+                    className="px-3 py-2 text-gray-400 hover:text-red-400 text-sm transition-colors"
+                    title="Clear matchup"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
