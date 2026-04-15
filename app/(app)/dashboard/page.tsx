@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
@@ -129,8 +130,37 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* MLS NEXT Bracket Promo */}
+      <div className="mt-8 bg-brand-card border border-brand-green/40 rounded-xl overflow-hidden">
+        <div className="flex items-center gap-4 p-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-green">Live Now</span>
+              <span className="text-xs bg-brand-green/20 text-brand-green px-2 py-0.5 rounded-full border border-brand-green/30">MLS NEXT</span>
+            </div>
+            <h2 className="text-white font-bold text-base leading-tight">VA Regional Bracket Challenge</h2>
+            <p className="text-brand-muted text-xs mt-1">Pick group winners, predict scores & compete with the group. Locks May 1 at 7:45 AM.</p>
+            <Link
+              href="/brackets/va26-u13-ad"
+              className="inline-block mt-3 px-4 py-1.5 bg-brand-green text-black text-xs font-bold rounded-lg hover:bg-green-400 transition-colors"
+            >
+              Enter Bracket →
+            </Link>
+          </div>
+          <Link href="/brackets/va26-u13-ad" className="shrink-0">
+            <Image
+              src="/bracket-qr.png"
+              alt="Scan to open bracket"
+              width={96}
+              height={96}
+              className="rounded-lg"
+            />
+          </Link>
+        </div>
+      </div>
+
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link
           href="/parlays"
           className="bg-brand-surface border border-brand-border rounded-lg p-4 text-center text-sm hover:border-brand-green transition-colors"
