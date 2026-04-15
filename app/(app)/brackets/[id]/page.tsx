@@ -129,25 +129,25 @@ function GroupGameScores({
                           May {game.day} · {game.time} · R{game.round}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-300 flex-1 truncate text-right">{game.home.split(" ")[0]}</span>
+                          <span className="text-xs text-gray-300 flex-1 text-right leading-tight">{game.home}</span>
                           <input
                             type="number" min="0" max="20"
                             disabled={locked}
                             value={score.home}
                             onChange={(e) => onScore(game.id, { ...score, home: e.target.value })}
                             placeholder="0"
-                            className="w-8 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+                            className="w-8 shrink-0 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
                           />
-                          <span className="text-[10px] text-brand-muted font-bold">–</span>
+                          <span className="text-[10px] text-brand-muted font-bold shrink-0">–</span>
                           <input
                             type="number" min="0" max="20"
                             disabled={locked}
                             value={score.away}
                             onChange={(e) => onScore(game.id, { ...score, away: e.target.value })}
                             placeholder="0"
-                            className="w-8 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+                            className="w-8 shrink-0 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
                           />
-                          <span className="text-xs text-gray-300 flex-1 truncate">{game.away.split(" ")[0]}</span>
+                          <span className="text-xs text-gray-300 flex-1 leading-tight">{game.away}</span>
                         </div>
                       </div>
                     );
