@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  GROUPS, GROUP_KEYS, QF_SLOTS, SF_SEEDS,
+  GROUPS, GROUP_KEYS, GROUP_GAMES, QF_SLOTS, SF_SEEDS,
   ROUND_POINTS, MAX_SCORE, TEAM_RANKINGS,
-  type BracketPicks, EMPTY_PICKS,
+  type BracketPicks, type MatchScore, type GroupGame,
+  EMPTY_PICKS, EMPTY_SCORE,
   getGroupWinners, getSFTeams, getFinalTeams,
   isComplete, pickProgress,
 } from "@/lib/bracket-config";
@@ -67,6 +68,141 @@ function TeamButton({
   );
 }
 
+function GroupGameScores({
+  games,
+  scores,
+  locked,
+  onScore,
+}: {
+  games: GroupGame[];
+  scores: Record<number, MatchScore>;
+  locked: boolean;
+  onScore: (matchId: number, score: MatchScore) => void;
+}) {
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (g: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      next.has(g) ? next.delete(g) : next.add(g);
+      return next;
+    });
+
+  const gamesByGroup = GROUP_KEYS.reduce<Record<string, GroupGame[]>>((acc, g) => {
+    acc[g] = games.filter((game) => game.group === g);
+    return acc;
+  }, {});
+
+  return (
+    <section>
+      <h2 className="text-sm font-bold text-brand-muted uppercase tracking-widest mb-1">
+        Group Game Score Predictions
+      </h2>
+      <p className="text-[11px] text-brand-muted mb-3">
+        Optional — predict scores for all 48 group games. Used as a tiebreaker on the leaderboard.
+      </p>
+      <div className="space-y-2">
+        {GROUP_KEYS.map((g) => {
+          const groupGames = gamesByGroup[g] ?? [];
+          const filled = groupGames.filter((gm) => scores[gm.id]?.home !== "" && scores[gm.id]?.away !== "").length;
+          const open = openGroups.has(g);
+          return (
+            <div key={g} className="bg-brand-card border border-brand-border rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleGroup(g)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-brand-surface transition-colors"
+              >
+                <span className="font-bold text-brand-gold">Group {g}</span>
+                <div className="flex items-center gap-2">
+                  {filled > 0 && (
+                    <span className="text-[10px] text-brand-green">{filled}/{groupGames.length} predicted</span>
+                  )}
+                  <span className="text-brand-muted text-xs">{open ? "▲" : "▼"}</span>
+                </div>
+              </button>
+              {open && (
+                <div className="px-3 pb-3 space-y-2 border-t border-brand-border pt-2">
+                  {groupGames.map((game) => {
+                    const score = scores[game.id] ?? EMPTY_SCORE;
+                    return (
+                      <div key={game.id} className="bg-brand-surface rounded-lg p-2">
+                        <div className="text-[9px] text-brand-muted mb-1.5">
+                          May {game.day} · {game.time} · R{game.round}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-300 flex-1 truncate text-right">{game.home.split(" ")[0]}</span>
+                          <input
+                            type="number" min="0" max="20"
+                            disabled={locked}
+                            value={score.home}
+                            onChange={(e) => onScore(game.id, { ...score, home: e.target.value })}
+                            placeholder="0"
+                            className="w-8 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+                          />
+                          <span className="text-[10px] text-brand-muted font-bold">–</span>
+                          <input
+                            type="number" min="0" max="20"
+                            disabled={locked}
+                            value={score.away}
+                            onChange={(e) => onScore(game.id, { ...score, away: e.target.value })}
+                            placeholder="0"
+                            className="w-8 text-center text-xs bg-brand-card border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+                          />
+                          <span className="text-xs text-gray-300 flex-1 truncate">{game.away.split(" ")[0]}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ScoreInput({
+  homeTeam,
+  awayTeam,
+  score,
+  locked,
+  onChange,
+}: {
+  homeTeam: string;
+  awayTeam: string;
+  score: MatchScore;
+  locked: boolean;
+  onChange: (s: MatchScore) => void;
+}) {
+  return (
+    <div className="mt-1.5 pt-1.5 border-t border-brand-border">
+      <div className="text-[9px] text-brand-muted mb-1 text-center">Score (optional · +1 bonus)</div>
+      <div className="flex items-center justify-center gap-1.5">
+        <span className="text-[9px] text-gray-400 truncate max-w-[52px] text-right">{homeTeam.split(" ")[0]}</span>
+        <input
+          type="number" min="0" max="20"
+          disabled={locked}
+          value={score.home}
+          onChange={(e) => onChange({ ...score, home: e.target.value })}
+          className="w-8 text-center text-xs bg-brand-surface border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+          placeholder="0"
+        />
+        <span className="text-[10px] text-brand-muted font-bold">–</span>
+        <input
+          type="number" min="0" max="20"
+          disabled={locked}
+          value={score.away}
+          onChange={(e) => onChange({ ...score, away: e.target.value })}
+          className="w-8 text-center text-xs bg-brand-surface border border-brand-border rounded px-1 py-0.5 text-white focus:border-brand-gold focus:outline-none disabled:opacity-40"
+          placeholder="0"
+        />
+        <span className="text-[9px] text-gray-400 truncate max-w-[52px]">{awayTeam.split(" ")[0]}</span>
+      </div>
+    </div>
+  );
+}
+
 function MatchupPick({
   label,
   home,
@@ -75,6 +211,8 @@ function MatchupPick({
   locked,
   pointValue,
   onPick,
+  score,
+  onScore,
 }: {
   label: string;
   home: string;
@@ -83,6 +221,8 @@ function MatchupPick({
   locked: boolean;
   pointValue: number;
   onPick: (team: string) => void;
+  score?: MatchScore;
+  onScore?: (s: MatchScore) => void;
 }) {
   return (
     <div className="bg-brand-surface border border-brand-border rounded-lg p-2 space-y-1">
@@ -103,6 +243,15 @@ function MatchupPick({
         disabled={locked || !away}
         onClick={() => onPick(away)}
       />
+      {picked && home && away && onScore && score !== undefined && (
+        <ScoreInput
+          homeTeam={home}
+          awayTeam={away}
+          score={score}
+          locked={locked}
+          onChange={onScore}
+        />
+      )}
     </div>
   );
 }
@@ -210,6 +359,25 @@ export default function BracketPage() {
     setPicks((p) => ({ ...p, final: team }));
   };
 
+  const setQFScore = (matchId: number, score: MatchScore) => {
+    setPicks((p) => ({ ...p, qfScores: { ...p.qfScores, [String(matchId)]: score } }));
+  };
+
+  const setSFScore = (matchId: number, score: MatchScore) => {
+    setPicks((p) => ({ ...p, sfScores: { ...p.sfScores, [String(matchId)]: score } }));
+  };
+
+  const setFinalScore = (score: MatchScore) => {
+    setPicks((p) => ({ ...p, finalScore: score }));
+  };
+
+  const setGroupGameScore = (matchId: number, score: MatchScore) => {
+    setPicks((p) => ({
+      ...p,
+      groupGameScores: { ...(p.groupGameScores ?? {}), [matchId]: score },
+    }));
+  };
+
   // ── Save ──────────────────────────────────────────────────────────────────
 
   const savePicks = async () => {
@@ -302,6 +470,7 @@ export default function BracketPage() {
             { label: "Quarterfinals", pts: ROUND_POINTS.qf },
             { label: "Semifinals", pts: ROUND_POINTS.sf },
             { label: "Champion", pts: ROUND_POINTS.final },
+            { label: "Exact Score", pts: ROUND_POINTS.scoreBonus },
           ].map((r) => (
             <span key={r.label} className="bg-brand-card border border-brand-border px-2 py-1 rounded">
               {r.label}: <span className="text-brand-gold font-bold">+{r.pts}pt</span>
@@ -460,6 +629,14 @@ export default function BracketPage() {
             </div>
           </section>
 
+          {/* ── GROUP GAME SCORES ───────────────────────────────────────── */}
+          <GroupGameScores
+            games={GROUP_GAMES}
+            scores={picks.groupGameScores ?? {}}
+            locked={locked}
+            onScore={setGroupGameScore}
+          />
+
           {/* ── QUARTERFINALS ───────────────────────────────────────────── */}
           <section>
             <h2 className="text-sm font-bold text-brand-muted uppercase tracking-widest mb-1">
@@ -508,6 +685,15 @@ export default function BracketPage() {
                     {pickedTeam && (
                       <div className="text-[10px] text-brand-green truncate">✓ {pickedTeam.split(" ")[0]}</div>
                     )}
+                    {pickedTeam && groupWinners.length === 8 && (
+                      <ScoreInput
+                        homeTeam={groupWinners[slot.highSeed - 1] || "Seed " + slot.highSeed}
+                        awayTeam={groupWinners[slot.lowSeed - 1] || "Seed " + slot.lowSeed}
+                        score={picks.qfScores?.[String(slot.id)] ?? EMPTY_SCORE}
+                        locked={locked}
+                        onChange={(s) => setQFScore(slot.id, s)}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -532,6 +718,8 @@ export default function BracketPage() {
                     locked={locked}
                     pointValue={ROUND_POINTS.sf}
                     onPick={(t) => setSFPick(seed.id, t)}
+                    score={picks.sfScores?.[String(seed.id)] ?? EMPTY_SCORE}
+                    onScore={(s) => setSFScore(seed.id, s)}
                   />
                 );
               })}
@@ -555,6 +743,8 @@ export default function BracketPage() {
                     locked={locked}
                     pointValue={ROUND_POINTS.final}
                     onPick={setFinalPick}
+                    score={picks.finalScore ?? EMPTY_SCORE}
+                    onScore={setFinalScore}
                   />
                 );
               })()}

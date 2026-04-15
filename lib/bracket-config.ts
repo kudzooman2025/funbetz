@@ -33,6 +33,74 @@ export const GROUPS: Record<string, string[]> = {
 
 export const GROUP_KEYS = Object.keys(GROUPS) as string[];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Group Game Schedule (all 48 games, May 1–2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface GroupGame {
+  id: number;      // modular11 match ID
+  home: string;
+  away: string;
+  group: string;
+  round: number;   // 1, 2, or 3
+  time: string;    // display time e.g. "7:45 AM"
+  day: 1 | 2;      // May 1 or May 2
+}
+
+export const GROUP_GAMES: GroupGame[] = [
+  // ── May 1 — Round 1 ──────────────────────────────────────────────────────
+  { id: 19747, home: "Carolina Velocity FC",          away: "Cedar Stars Academy Monmouth", group: "A", round: 1, time: "7:45 AM",  day: 1 },
+  { id: 19748, home: "Bethesda SC",                   away: "Springfield SYC",               group: "A", round: 1, time: "7:45 AM",  day: 1 },
+  { id: 19749, home: "Players Development Academy",   away: "Sporting Athletic Club",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
+  { id: 19750, home: "Charlotte Independence SC",     away: "Virginia Revolution SC",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
+  { id: 19755, home: "Alexandria SA",                 away: "TBD (Group B)",                 group: "B", round: 1, time: "9:15 AM",  day: 1 },
+  { id: 19756, home: "Carolina Core FC",              away: "West Virginia Soccer",          group: "B", round: 1, time: "9:15 AM",  day: 1 },
+  { id: 19757, home: "Real Futbol Academy",           away: "Wake FC",                       group: "G", round: 1, time: "9:15 AM",  day: 1 },
+  { id: 19758, home: "Loudoun Soccer Club",           away: "Keystone FC",                   group: "G", round: 1, time: "9:15 AM",  day: 1 },
+  { id: 19707, home: "Baltimore Armour",              away: "PA Classics Harrisburg",        group: "D", round: 1, time: "10:45 AM", day: 1 },
+  { id: 19708, home: "FC Richmond",                   away: "TBD (Group D)",                 group: "D", round: 1, time: "10:45 AM", day: 1 },
+  { id: 19709, home: "Coppermine SC",                 away: "Virginia Rush",                 group: "E", round: 1, time: "10:45 AM", day: 1 },
+  { id: 19710, home: "Fox Soccer Academy Carolinas",  away: "PDA Hibernian",                 group: "E", round: 1, time: "10:45 AM", day: 1 },
+  { id: 19715, home: "FC DELCO",                      away: "Triangle United SA",            group: "C", round: 1, time: "12:15 PM", day: 1 },
+  { id: 19716, home: "The Football Academy",          away: "The St. James FC",              group: "C", round: 1, time: "12:15 PM", day: 1 },
+  { id: 19717, home: "Queen City Mutiny FC",          away: "PA Classics",                   group: "F", round: 1, time: "12:15 PM", day: 1 },
+  { id: 19718, home: "McLean Youth Soccer",           away: "Trenton City Soccer Club",      group: "F", round: 1, time: "12:15 PM", day: 1 },
+  { id: 19699, home: "Springfield SYC",               away: "Carolina Velocity FC",          group: "A", round: 1, time: "1:45 PM",  day: 1 },
+  { id: 19700, home: "Cedar Stars Academy Monmouth",  away: "Bethesda SC",                   group: "A", round: 1, time: "1:45 PM",  day: 1 },
+  { id: 19701, home: "Virginia Revolution SC",        away: "Players Development Academy",   group: "H", round: 1, time: "1:45 PM",  day: 1 },
+  { id: 19702, home: "Sporting Athletic Club",        away: "Charlotte Independence SC",     group: "H", round: 1, time: "1:45 PM",  day: 1 },
+  { id: 19723, home: "West Virginia Soccer",          away: "Alexandria SA",                 group: "B", round: 1, time: "3:15 PM",  day: 1 },
+  { id: 19724, home: "TBD (Group B)",                 away: "Carolina Core FC",              group: "B", round: 1, time: "3:15 PM",  day: 1 },
+  { id: 19725, home: "Keystone FC",                   away: "Real Futbol Academy",           group: "G", round: 1, time: "3:15 PM",  day: 1 },
+  { id: 19726, home: "Wake FC",                       away: "Loudoun Soccer Club",           group: "G", round: 1, time: "3:15 PM",  day: 1 },
+  { id: 19731, home: "Ironbound Soccer Club",         away: "Baltimore Armour",              group: "D", round: 1, time: "4:45 PM",  day: 1 },
+  { id: 19732, home: "PA Classics Harrisburg",        away: "FC Richmond",                   group: "D", round: 1, time: "4:45 PM",  day: 1 },
+  { id: 19733, home: "PDA Hibernian",                 away: "Coppermine SC",                 group: "E", round: 1, time: "4:45 PM",  day: 1 },
+  { id: 19734, home: "Virginia Rush",                 away: "Fox Soccer Academy Carolinas",  group: "E", round: 1, time: "4:45 PM",  day: 1 },
+  { id: 19739, home: "The St. James FC",              away: "FC DELCO",                      group: "C", round: 1, time: "6:15 PM",  day: 1 },
+  { id: 19740, home: "Triangle United SA",            away: "The Football Academy",          group: "C", round: 1, time: "6:15 PM",  day: 1 },
+  { id: 19741, home: "Trenton City Soccer Club",      away: "Queen City Mutiny FC",          group: "F", round: 1, time: "6:15 PM",  day: 1 },
+  { id: 19742, home: "PA Classics",                   away: "McLean Youth Soccer",           group: "F", round: 1, time: "6:15 PM",  day: 1 },
+
+  // ── May 2 — Round 2 ──────────────────────────────────────────────────────
+  { id: 19787, home: "Springfield SYC",               away: "Cedar Stars Academy Monmouth",  group: "A", round: 2, time: "9:00 AM",  day: 2 },
+  { id: 19788, home: "Carolina Velocity FC",          away: "Bethesda SC",                   group: "A", round: 2, time: "9:00 AM",  day: 2 },
+  { id: 19789, home: "Players Development Academy",   away: "Charlotte Independence SC",     group: "H", round: 2, time: "9:00 AM",  day: 2 },
+  { id: 19790, home: "Virginia Revolution SC",        away: "Sporting Athletic Club",        group: "H", round: 2, time: "9:00 AM",  day: 2 },
+  { id: 19771, home: "Alexandria SA",                 away: "Carolina Core FC",              group: "B", round: 2, time: "10:30 AM", day: 2 },
+  { id: 19772, home: "West Virginia Soccer",          away: "TBD (Group B)",                 group: "B", round: 2, time: "10:30 AM", day: 2 },
+  { id: 19773, home: "Real Futbol Academy",           away: "Loudoun Soccer Club",           group: "G", round: 2, time: "10:30 AM", day: 2 },
+  { id: 19774, home: "Keystone FC",                   away: "Wake FC",                       group: "G", round: 2, time: "10:30 AM", day: 2 },
+  { id: 19779, home: "Baltimore Armour",              away: "FC Richmond",                   group: "D", round: 2, time: "12:00 PM", day: 2 },
+  { id: 19780, home: "Ironbound Soccer Club",         away: "PA Classics Harrisburg",        group: "D", round: 2, time: "12:00 PM", day: 2 },
+  { id: 19781, home: "Coppermine SC",                 away: "Fox Soccer Academy Carolinas",  group: "E", round: 2, time: "12:00 PM", day: 2 },
+  { id: 19782, home: "PDA Hibernian",                 away: "Virginia Rush",                 group: "E", round: 2, time: "12:00 PM", day: 2 },
+  { id: 19763, home: "FC DELCO",                      away: "The Football Academy",          group: "C", round: 2, time: "1:30 PM",  day: 2 },
+  { id: 19764, home: "The St. James FC",              away: "Triangle United SA",            group: "C", round: 2, time: "1:30 PM",  day: 2 },
+  { id: 19765, home: "Queen City Mutiny FC",          away: "McLean Youth Soccer",           group: "F", round: 2, time: "1:30 PM",  day: 2 },
+  { id: 19766, home: "Trenton City Soccer Club",      away: "PA Classics",                   group: "F", round: 2, time: "1:30 PM",  day: 2 },
+];
+
 /**
  * National MLS NEXT rankings as of April 14, 2026.
  * Source: MLSN Cup Virginia Regional May 1–4 2026 spreadsheet.
@@ -116,35 +184,54 @@ export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
 
 /** Points per correct pick */
 export const ROUND_POINTS = {
-  groupFirst: 1,
-  qf:         2,
-  sf:         4,
-  final:      8,
+  groupFirst:  1,
+  qf:          2,
+  sf:          4,
+  final:       8,
+  scoreBonus:  1,  // bonus per correct exact score prediction (QF/SF/Final)
 };
 
-/** Maximum possible score: 8+8+8+8 = 32 */
+/** Maximum possible score: 8+8+8+8 + 7 bonus = 39 */
 export const MAX_SCORE =
   ROUND_POINTS.groupFirst * 8 +
   ROUND_POINTS.qf         * 4 +
   ROUND_POINTS.sf         * 2 +
-  ROUND_POINTS.final;
+  ROUND_POINTS.final      +
+  ROUND_POINTS.scoreBonus * 7;  // 4 QF + 2 SF + 1 Final
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface BracketPicks {
-  groups: Record<string, { first: string; second?: string }>;
-  qf: Record<string, string>;   // slotId (1-4) → team name
-  sf: Record<string, string>;   // matchId (1-2) → team name
-  final: string;
+/** Predicted or actual score for a single match (stored as strings for input flexibility) */
+export interface MatchScore {
+  home: string;
+  away: string;
 }
 
+export interface BracketPicks {
+  groups: Record<string, { first: string; second?: string }>;
+  qf: Record<string, string>;        // slotId (1-4) → team name
+  sf: Record<string, string>;        // matchId (1-2) → team name
+  final: string;
+  qfScores:         Record<string, MatchScore>;  // slotId → predicted score
+  sfScores:         Record<string, MatchScore>;  // matchId → predicted score
+  finalScore:       MatchScore;
+  /** Optional group game score predictions — used as tiebreaker only, keyed by match ID */
+  groupGameScores?: Record<number, MatchScore>;
+}
+
+export const EMPTY_SCORE: MatchScore = { home: "", away: "" };
+
 export const EMPTY_PICKS: BracketPicks = {
-  groups: Object.fromEntries(GROUP_KEYS.map((g) => [g, { first: "" }])),
-  qf: {},
-  sf: {},
-  final: "",
+  groups:          Object.fromEntries(GROUP_KEYS.map((g) => [g, { first: "" }])),
+  qf:              {},
+  sf:              {},
+  final:           "",
+  qfScores:        {},
+  sfScores:        {},
+  finalScore:      { home: "", away: "" },
+  groupGameScores: {},
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
