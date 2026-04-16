@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = "FunBetz <noreply@funbetz.com>";
+const FROM = "FunBetz <noreply@funbetz.life>";
 
 export async function sendPasswordResetEmail(
   to: string,
@@ -42,7 +42,7 @@ export async function sendUsernameReminderEmail(
         <h1 style="color: #4ade80; margin-top: 0;">Your FunBetz Username</h1>
         <p>You asked us to remind you of your username. Here it is:</p>
         <p style="font-size: 24px; font-weight: bold; color: #4ade80; margin: 24px 0;">${username}</p>
-        <p>Head back to <a href="${process.env.NEXTAUTH_URL}/login" style="color: #4ade80;">FunBetz</a> and log in.</p>
+        <p>Head back to <a href="${process.env.NEXTAUTH_URL}/login" style="color: #4ade80;">funbetz.life</a> and log in.</p>
         <hr style="border-color: #333; margin: 24px 0;" />
         <p style="color: #555; font-size: 12px;">FunBetz · Fantasy sports for friends</p>
       </div>
