@@ -26,6 +26,16 @@ interface ResultRow {
   updatedAt: string;
 }
 
+interface UserRow {
+  id: string;
+  username: string;
+  email: string;
+  isAdmin: boolean;
+  createdAt: string;
+  walletBalance: number;
+  bracketEntries: { score: number }[];
+}
+
 // All teams in tournament, grouped for convenient dropdowns
 const ALL_TEAMS = Object.values(GROUPS).flat();
 
@@ -45,6 +55,12 @@ export default function AdminPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [pendingKO, setPendingKO] = useState<Record<string, string>>({});
+
+  // Users management
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userAction, setUserAction] = useState<string | null>(null);
+  const [showUsers, setShowUsers] = useState(false);
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -93,6 +109,61 @@ export default function AdminPage() {
       `[${new Date().toLocaleTimeString()}] ${msg}`,
       ...prev.slice(0, 49),
     ]);
+  }
+
+  // ── Users ──────────────────────────────────────────────────────────────────
+  async function loadUsers() {
+    setUsersLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users);
+      }
+    } catch {
+      addLog("Failed to load users");
+    }
+    setUsersLoading(false);
+  }
+
+  async function handleDeleteUser(userId: string, username: string) {
+    if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+    setUserAction(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        addLog(`Deleted user: ${username}`);
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+      } else {
+        addLog(`Failed to delete ${username}: ${data.error}`);
+      }
+    } catch (err) {
+      addLog(`Error: ${String(err)}`);
+    }
+    setUserAction(null);
+  }
+
+  async function handleResetPassword(userId: string, username: string) {
+    if (!confirm(`Reset password for "${username}"? A temporary password will be emailed to them.`)) return;
+    setUserAction(`reset-${userId}`);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.emailSent) {
+          addLog(`Password reset email sent to ${username}`);
+        } else {
+          addLog(`Password reset for ${username} — email failed. Temp password: ${data.tempPassword}`);
+          alert(`Temp password for ${username}: ${data.tempPassword}\n(Email failed to send)`);
+        }
+      } else {
+        addLog(`Failed to reset password for ${username}: ${data.error}`);
+      }
+    } catch (err) {
+      addLog(`Error: ${String(err)}`);
+    }
+    setUserAction(null);
   }
 
   // ── Scrape ─────────────────────────────────────────────────────────────────
@@ -340,6 +411,23 @@ export default function AdminPage() {
         onClear={clearMatchup}
       />
 
+      {/* Actual Scores */}
+      <ScoreSection
+        title="Actual Scores"
+        subtitle="Enter final scores to award exact-score bonus points (+1 each)"
+        slots={[
+          ...QF_SLOTS.map((s) => ({ key: String(s.id), label: `QF ${s.id}`, round: "qf_score" })),
+          ...SF_SEEDS.map((s) => ({ key: String(s.id), label: `SF ${s.id}`, round: "sf_score" })),
+          { key: "1", label: "Final", round: "final_score" },
+        ]}
+        pending={pendingKO}
+        setPending={setPendingKO}
+        storedWinner={storedWinner}
+        saving={saving}
+        onSave={saveResult}
+        onClear={clearResult}
+      />
+
       {/* Quarterfinals */}
       <KnockoutSection
         title="Quarterfinals"
@@ -390,6 +478,91 @@ export default function AdminPage() {
         onSave={saveResult}
         onClear={clearResult}
       />
+
+      {/* Users Management */}
+      <section className="bg-gray-800 rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Users</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Manage accounts — delete or reset passwords</p>
+          </div>
+          <button
+            onClick={() => { setShowUsers(!showUsers); if (!showUsers) loadUsers(); }}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {showUsers ? "Hide" : "Show Users"}
+          </button>
+        </div>
+
+        {showUsers && (
+          <>
+            {usersLoading ? (
+              <p className="text-gray-400 text-sm">Loading users…</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-400 text-xs uppercase border-b border-gray-700">
+                      <th className="text-left py-2 pr-4">Username</th>
+                      <th className="text-left py-2 pr-4">Email</th>
+                      <th className="text-left py-2 pr-4">Bracket Score</th>
+                      <th className="text-left py-2 pr-4">Role</th>
+                      <th className="text-right py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700/50">
+                    {users.map((u) => {
+                      const bracketScore = u.bracketEntries[0]?.score ?? 0;
+                      const isActing = userAction === u.id || userAction === `reset-${u.id}`;
+                      return (
+                        <tr key={u.id} className="text-gray-300">
+                          <td className="py-2.5 pr-4 font-medium">{u.username}</td>
+                          <td className="py-2.5 pr-4 text-gray-400 text-xs">{u.email}</td>
+                          <td className="py-2.5 pr-4">
+                            <span className="text-brand-green font-semibold">{bracketScore}</span>
+                          </td>
+                          <td className="py-2.5 pr-4">
+                            {u.isAdmin ? (
+                              <span className="text-brand-gold text-xs font-semibold">Admin</span>
+                            ) : (
+                              <span className="text-gray-500 text-xs">User</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleResetPassword(u.id, u.username)}
+                                disabled={isActing}
+                                className="px-3 py-1 bg-yellow-600/80 hover:bg-yellow-500 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
+                                title="Reset password"
+                              >
+                                {userAction === `reset-${u.id}` ? "…" : "Reset PW"}
+                              </button>
+                              {!u.isAdmin && (
+                                <button
+                                  onClick={() => handleDeleteUser(u.id, u.username)}
+                                  disabled={isActing}
+                                  className="px-3 py-1 bg-red-700/80 hover:bg-red-600 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
+                                  title="Delete user"
+                                >
+                                  {userAction === u.id ? "…" : "Delete"}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {users.length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-4">No users found</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
       {/* Activity Log */}
       {log.length > 0 && (
@@ -496,6 +669,90 @@ function MatchupSection({
                   >
                     ✕
                   </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ── ScoreSection component ───────────────────────────────────────────────────
+
+interface ScoreSlot { key: string; label: string; round: string; }
+
+function ScoreSection({
+  title, subtitle, slots, pending, setPending, storedWinner, saving, onSave, onClear,
+}: {
+  title: string;
+  subtitle: string;
+  slots: ScoreSlot[];
+  pending: Record<string, string>;
+  setPending: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  storedWinner: (round: string, key: string) => ResultRow | undefined;
+  saving: string | null;
+  onSave: (round: string, key: string) => Promise<void>;
+  onClear: (round: string, key: string) => Promise<void>;
+}) {
+  return (
+    <section className="bg-gray-800 rounded-xl p-5 space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {slots.map(({ key, label, round }) => {
+          const stateKey = `${round}_${key}`;
+          const stored = storedWinner(round, key);
+          const isSaving = saving === stateKey;
+          // score stored as "home-away" string e.g. "2-1"
+          const val = pending[stateKey] ?? stored?.winner ?? "";
+          const parts = val.split("-");
+          const homeVal = parts[0] ?? "";
+          const awayVal = parts[1] ?? "";
+
+          const setScore = (h: string, a: string) => {
+            setPending((p) => ({ ...p, [stateKey]: `${h}-${a}` }));
+          };
+
+          return (
+            <div key={stateKey} className="bg-gray-900 rounded-lg p-3 space-y-2">
+              <p className="text-sm text-gray-300 font-medium">{label}</p>
+              {stored && (
+                <p className="text-xs text-brand-green">Saved: <span className="font-bold">{stored.winner}</span></p>
+              )}
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number" min="0" max="20"
+                  value={homeVal}
+                  onChange={(e) => setScore(e.target.value, awayVal)}
+                  placeholder="0"
+                  className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+                />
+                <span className="text-gray-400 font-bold">–</span>
+                <input
+                  type="number" min="0" max="20"
+                  value={awayVal}
+                  onChange={(e) => setScore(homeVal, e.target.value)}
+                  placeholder="0"
+                  className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onSave(round, key)}
+                  disabled={!homeVal || !awayVal || isSaving}
+                  className="px-3 py-1 bg-brand-green hover:bg-green-500 disabled:opacity-40 text-black text-xs font-semibold rounded-lg transition-colors"
+                >
+                  {isSaving ? "…" : "Save"}
+                </button>
+                {stored && (
+                  <button
+                    onClick={() => onClear(round, key)}
+                    className="px-2 py-1 text-gray-400 hover:text-red-400 text-xs transition-colors"
+                  >✕</button>
                 )}
               </div>
             </div>
