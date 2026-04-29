@@ -58,7 +58,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19757, home: "Real Futbol Academy",           away: "Wake FC",                       group: "G", round: 1, time: "9:15 AM",  day: 1 },
   { id: 19758, home: "Loudoun Soccer Club",           away: "Keystone FC",                   group: "G", round: 1, time: "9:15 AM",  day: 1 },
   { id: 19707, home: "Baltimore Armour",              away: "PA Classics Harrisburg",        group: "D", round: 1, time: "10:45 AM", day: 1 },
-  { id: 19708, home: "FC Richmond",                   away: "TBD (Group D)",                 group: "D", round: 1, time: "10:45 AM", day: 1 },
+  { id: 19708, home: "FC Richmond",                   away: "Ironbound Soccer Club",                 group: "D", round: 1, time: "10:45 AM", day: 1 },
   { id: 19709, home: "Coppermine SC",                 away: "Virginia Rush",                 group: "E", round: 1, time: "10:45 AM", day: 1 },
   { id: 19710, home: "Fox Soccer Academy Carolinas",  away: "PDA Hibernian",                 group: "E", round: 1, time: "10:45 AM", day: 1 },
   { id: 19715, home: "FC DELCO",                      away: "Triangle United SA",            group: "C", round: 1, time: "12:15 PM", day: 1 },
