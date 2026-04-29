@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { GROUPS, GROUP_GAMES, TEAM_RANKINGS } from "@/lib/bracket-config";
 import { getLogoUrl } from "@/lib/team-logos";
 
@@ -62,8 +63,18 @@ function TeamLogo({ team, size = 40 }: { team: string; size?: number }) {
 }
 
 // ─── Game Card ────────────────────────────────────────────────────────────────
-function GameCard({ home, away, group, time, round, score }: {
-  home: string; away: string; group: string; time: string; round: number; score?: string;
+function GameCard({
+  id, home, away, group, time, round, score, isAdmin, onScoreSaved,
+}: {
+  id: number;
+  home: string;
+  away: string;
+  group: string;
+  time: string;
+  round: number;
+  score?: string;
+  isAdmin?: boolean;
+  onScoreSaved?: (gameId: number, score: string) => void;
 }) {
   const colors = GROUP_COLORS[group];
   const parts = score ? score.split("-") : null;
@@ -71,43 +82,163 @@ function GameCard({ home, away, group, time, round, score }: {
   const awayGoals = parts?.[1];
   const hasScore = homeGoals !== undefined && awayGoals !== undefined;
 
+  const [editing, setEditing] = useState(false);
+  const [homeInput, setHomeInput] = useState(homeGoals ?? "");
+  const [awayInput, setAwayInput] = useState(awayGoals ?? "");
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const awayRef = useRef<HTMLInputElement>(null);
+
+  // Keep inputs in sync when score changes from parent
+  useEffect(() => {
+    if (!editing) {
+      setHomeInput(homeGoals ?? "");
+      setAwayInput(awayGoals ?? "");
+    }
+  }, [score, editing, homeGoals, awayGoals]);
+
+  async function handleSave() {
+    if (homeInput === "" || awayInput === "") return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/bracket-results", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challengeId: "va26-u13-ad",
+          results: [{ round: "group_score", key: String(id), winner: `${homeInput}-${awayInput}` }],
+        }),
+      });
+      if (res.ok) {
+        const newScore = `${homeInput}-${awayInput}`;
+        onScoreSaved?.(id, newScore);
+        setEditing(false);
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 2500);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    setHomeInput(homeGoals ?? "");
+    setAwayInput(awayGoals ?? "");
+    setEditing(false);
+  }
+
   return (
     <div className={`rounded-xl border ${colors.border} ${colors.bg} p-3`}>
       <div className="flex items-center justify-between mb-2">
         <span className={`text-xs font-bold ${colors.text}`}>Group {group} · Round {round}</span>
-        <span className="text-xs text-brand-muted">{time}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <TeamLogo team={home} size={36} />
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold truncate ${hasScore && Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{home}</p>
-          {TEAM_RANKINGS[home] && (
-            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
+        <div className="flex items-center gap-2">
+          {savedFlash && (
+            <span className="text-xs text-brand-green font-semibold">✓ Saved</span>
+          )}
+          <span className="text-xs text-brand-muted">{time}</span>
+          {isAdmin && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Enter score"
+              className="text-brand-muted hover:text-white text-sm leading-none transition-colors"
+            >
+              ✏️
+            </button>
           )}
         </div>
-        {hasScore ? (
-          <div className="flex items-center gap-1 px-2">
-            <span className={`text-lg font-bold ${Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{homeGoals}</span>
-            <span className="text-brand-muted font-bold text-sm">–</span>
-            <span className={`text-lg font-bold ${Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{awayGoals}</span>
+      </div>
+
+      {editing ? (
+        /* ── Edit mode ── */
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <TeamLogo team={home} size={32} />
+            <span className="flex-1 text-sm font-semibold text-white truncate">{home}</span>
+            <input
+              type="number"
+              min={0}
+              value={homeInput}
+              onChange={(e) => setHomeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Tab") { e.preventDefault(); awayRef.current?.focus(); }
+                if (e.key === "Enter") { e.preventDefault(); awayRef.current?.focus(); }
+                if (e.key === "Escape") handleCancel();
+              }}
+              className="w-14 text-center rounded-lg bg-brand-surface border border-brand-border text-white text-lg font-bold py-1 focus:outline-none focus:border-brand-green"
+              placeholder="0"
+              autoFocus
+            />
           </div>
-        ) : (
-          <span className="text-brand-muted font-bold text-sm px-1">vs</span>
-        )}
-        <div className="flex-1 min-w-0 text-right">
-          <p className={`text-sm font-semibold truncate ${hasScore && Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{away}</p>
-          {TEAM_RANKINGS[away] && (
-            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
-          )}
+          <div className="flex items-center gap-2">
+            <TeamLogo team={away} size={32} />
+            <span className="flex-1 text-sm font-semibold text-white truncate">{away}</span>
+            <input
+              ref={awayRef}
+              type="number"
+              min={0}
+              value={awayInput}
+              onChange={(e) => setAwayInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); handleSave(); }
+                if (e.key === "Escape") handleCancel();
+              }}
+              className="w-14 text-center rounded-lg bg-brand-surface border border-brand-border text-white text-lg font-bold py-1 focus:outline-none focus:border-brand-green"
+              placeholder="0"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSave}
+              disabled={saving || homeInput === "" || awayInput === ""}
+              className="flex-1 py-1.5 rounded-lg bg-brand-green text-brand-dark text-xs font-bold disabled:opacity-50 hover:bg-green-400 transition-colors"
+            >
+              {saving ? "Saving…" : "Save Score"}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-1.5 rounded-lg border border-brand-border text-brand-muted text-xs hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-        <TeamLogo team={away} size={36} />
-      </div>
+      ) : (
+        /* ── Display mode ── */
+        <div className="flex items-center gap-2">
+          <TeamLogo team={home} size={36} />
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-semibold truncate ${hasScore && Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{home}</p>
+            {TEAM_RANKINGS[home] && (
+              <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
+            )}
+          </div>
+          {hasScore ? (
+            <div className="flex items-center gap-1 px-2">
+              <span className={`text-lg font-bold ${Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{homeGoals}</span>
+              <span className="text-brand-muted font-bold text-sm">–</span>
+              <span className={`text-lg font-bold ${Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{awayGoals}</span>
+            </div>
+          ) : (
+            <span className="text-brand-muted font-bold text-sm px-1">vs</span>
+          )}
+          <div className="flex-1 min-w-0 text-right">
+            <p className={`text-sm font-semibold truncate ${hasScore && Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{away}</p>
+            {TEAM_RANKINGS[away] && (
+              <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
+            )}
+          </div>
+          <TeamLogo team={away} size={36} />
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin ?? false;
+
   const [activeDay, setActiveDay] = useState<"1" | "2" | "knockout">("1");
   const [activeGroup, setActiveGroup] = useState<string>("ALL");
   const [scores, setScores] = useState<Record<string, string>>({});
@@ -118,6 +249,10 @@ export default function SchedulePage() {
       .then((data) => setScores(data))
       .catch(() => {});
   }, []);
+
+  function handleScoreSaved(gameId: number, score: string) {
+    setScores((prev) => ({ ...prev, [String(gameId)]: score }));
+  }
 
   const day1Games = GROUP_GAMES.filter((g) => g.day === 1);
   const day2Games = GROUP_GAMES.filter((g) => g.day === 2);
@@ -212,7 +347,13 @@ export default function SchedulePage() {
             Friday, May 1 · {filteredDay1.length} games
           </p>
           {filteredDay1.map((game) => (
-            <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
+            <GameCard
+              key={game.id}
+              {...game}
+              score={scores[String(game.id)]}
+              isAdmin={isAdmin}
+              onScoreSaved={handleScoreSaved}
+            />
           ))}
         </div>
       )}
@@ -224,7 +365,13 @@ export default function SchedulePage() {
             Saturday, May 2 · {filteredDay2.length} games
           </p>
           {filteredDay2.map((game) => (
-            <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
+            <GameCard
+              key={game.id}
+              {...game}
+              score={scores[String(game.id)]}
+              isAdmin={isAdmin}
+              onScoreSaved={handleScoreSaved}
+            />
           ))}
         </div>
       )}
