@@ -101,3 +101,32 @@ export async function DELETE(req: Request) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function PUT(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { challengeId, results } = body as {
+    challengeId?: string;
+    results?: { round: string; key: string; winner: string }[];
+  };
+
+  if (!challengeId || !Array.isArray(results) || results.length === 0) {
+    return NextResponse.json({ error: "challengeId and results array required" }, { status: 400 });
+  }
+
+  const saved: string[] = [];
+  for (const { round, key, winner } of results) {
+    if (!round || !key || !winner) continue;
+    await prisma.bracketResult.upsert({
+      where: { challengeId_round_key: { challengeId, round, key } },
+      create: { challengeId, round, key, winner, source: "manual" },
+      update: { winner, source: "manual" },
+    });
+    saved.push(`${round}/${key}`);
+  }
+
+  return NextResponse.json({ saved });
+}
