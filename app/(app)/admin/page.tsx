@@ -13,7 +13,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { GROUPS, GROUP_GAMES, QF_SLOTS, SF_SEEDS } from "@/lib/bracket-config";
+import { GROUPS, GROUP_GAMES, QF_SLOTS, SF_SEEDS, GROUP_KEYS, type BracketPicks } from "@/lib/bracket-config";
 
 const CHALLENGE_ID = "va26-u13-ad";
 
@@ -34,6 +34,16 @@ interface UserRow {
   createdAt: string;
   walletBalance: number;
   bracketEntries: { score: number }[];
+}
+
+interface BracketEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  email: string;
+  score: number;
+  picks: BracketPicks;
+  updatedAt: string;
 }
 
 // All teams in tournament, grouped for convenient dropdowns
@@ -61,6 +71,12 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [userAction, setUserAction] = useState<string | null>(null);
   const [showUsers, setShowUsers] = useState(false);
+
+  // User brackets
+  const [bracketEntries, setBracketEntries] = useState<BracketEntry[]>([]);
+  const [bracketsLoading, setBracketsLoading] = useState(false);
+  const [showBrackets, setShowBrackets] = useState(false);
+  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -164,6 +180,21 @@ export default function AdminPage() {
       addLog(`Error: ${String(err)}`);
     }
     setUserAction(null);
+  }
+
+  // ── Bracket entries ───────────────────────────────────────────────────────
+  async function loadBracketEntries() {
+    setBracketsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/bracket-entries?challengeId=${CHALLENGE_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBracketEntries(data);
+      }
+    } catch {
+      addLog("Failed to load bracket entries");
+    }
+    setBracketsLoading(false);
   }
 
   // ── Scrape ─────────────────────────────────────────────────────────────────
@@ -488,6 +519,19 @@ export default function AdminPage() {
         saving={saving}
         onSave={saveResult}
         onClear={clearResult}
+      />
+
+      {/* User Brackets */}
+      <UserBracketsSection
+        entries={bracketEntries}
+        loading={bracketsLoading}
+        show={showBrackets}
+        expandedEntry={expandedEntry}
+        setExpandedEntry={setExpandedEntry}
+        onToggle={() => {
+          setShowBrackets(!showBrackets);
+          if (!showBrackets) loadBracketEntries();
+        }}
       />
 
       {/* Users Management */}
@@ -1025,6 +1069,153 @@ function KnockoutSection({
           );
         })}
       </div>
+    </section>
+  );
+}
+
+// ── UserBracketsSection component ────────────────────────────────────────────
+
+function UserBracketsSection({
+  entries,
+  loading,
+  show,
+  expandedEntry,
+  setExpandedEntry,
+  onToggle,
+}: {
+  entries: BracketEntry[];
+  loading: boolean;
+  show: boolean;
+  expandedEntry: string | null;
+  setExpandedEntry: (id: string | null) => void;
+  onToggle: () => void;
+}) {
+  return (
+    <section className="bg-gray-800 rounded-xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">User Brackets</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            View every user&apos;s picks — group winners, QF, SF, and Final
+          </p>
+        </div>
+        <button
+          onClick={onToggle}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {show ? "Hide" : `Show Brackets${entries.length ? ` (${entries.length})` : ""}`}
+        </button>
+      </div>
+
+      {show && (
+        <>
+          {loading ? (
+            <p className="text-gray-400 text-sm">Loading entries…</p>
+          ) : entries.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-4">No bracket entries yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {entries.map((entry) => {
+                const isOpen = expandedEntry === entry.userId;
+                const picks = entry.picks as BracketPicks;
+                const groupWinners = GROUP_KEYS.map((g) => ({
+                  group: g,
+                  team: picks?.groups?.[g]?.first || "—",
+                }));
+                const qfPicks = QF_SLOTS.map((s) => ({
+                  label: `QF${s.id} (${s.homeGroup}/${s.awayGroup})`,
+                  team: picks?.qf?.[String(s.id)] || "—",
+                }));
+                const sfPicks = [
+                  { label: "SF 1", team: picks?.sf?.["1"] || "—" },
+                  { label: "SF 2", team: picks?.sf?.["2"] || "—" },
+                ];
+                const finalPick = picks?.final || "—";
+
+                return (
+                  <div key={entry.userId} className="bg-gray-900 rounded-xl overflow-hidden border border-gray-700">
+                    {/* Row header */}
+                    <button
+                      onClick={() => setExpandedEntry(isOpen ? null : entry.userId)}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-brand-gold font-bold text-sm w-6">#{entry.rank}</span>
+                        <div>
+                          <p className="text-white font-semibold text-sm">{entry.username}</p>
+                          <p className="text-gray-500 text-xs">{entry.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-brand-green font-bold">{entry.score} pts</span>
+                        <span className="text-gray-500 text-xs">{isOpen ? "▲" : "▼"}</span>
+                      </div>
+                    </button>
+
+                    {/* Expanded picks */}
+                    {isOpen && (
+                      <div className="px-4 pb-4 border-t border-gray-700 pt-3 space-y-4">
+
+                        {/* Group Winners */}
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Group Winners</p>
+                          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                            {groupWinners.map(({ group, team }) => (
+                              <div key={group} className="bg-gray-800 rounded-lg p-2 text-center">
+                                <p className="text-brand-gold text-[10px] font-bold mb-1">Grp {group}</p>
+                                <p className={`text-xs truncate ${team === "—" ? "text-gray-600 italic" : "text-white"}`}>
+                                  {team === "—" ? "none" : team.split(" ")[0]}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* QF Picks */}
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Quarterfinals</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {qfPicks.map(({ label, team }) => (
+                              <div key={label} className="bg-gray-800 rounded-lg p-2">
+                                <p className="text-gray-500 text-[10px] mb-1">{label}</p>
+                                <p className={`text-xs font-semibold truncate ${team === "—" ? "text-gray-600 italic" : "text-brand-green"}`}>
+                                  {team === "—" ? "not picked" : team}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* SF + Final */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {sfPicks.map(({ label, team }) => (
+                            <div key={label} className="bg-gray-800 rounded-lg p-2">
+                              <p className="text-gray-500 text-[10px] mb-1">{label}</p>
+                              <p className={`text-xs font-semibold truncate ${team === "—" ? "text-gray-600 italic" : "text-blue-400"}`}>
+                                {team === "—" ? "not picked" : team}
+                              </p>
+                            </div>
+                          ))}
+                          <div className="bg-gray-800 rounded-lg p-2 border border-brand-gold/30">
+                            <p className="text-gray-500 text-[10px] mb-1">🏆 Champion</p>
+                            <p className={`text-xs font-bold truncate ${finalPick === "—" ? "text-gray-600 italic" : "text-brand-gold"}`}>
+                              {finalPick === "—" ? "not picked" : finalPick}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-600 text-[10px] text-right">
+                          Last saved: {new Date(entry.updatedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }
