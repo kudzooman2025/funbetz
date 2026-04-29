@@ -163,18 +163,18 @@ export const TEAM_RANKINGS: Record<string, number> = {
  * modular11 match IDs map to QF slots 1–4 in bracket order:
  *   Slot 1 → 19819 | Slot 2 → 19820 | Slot 3 → 19821 | Slot 4 → 19822
  */
-export const QF_SLOTS: { id: number; highSeed: number; lowSeed: number; label: string }[] = [
-  { id: 1, highSeed: 1, lowSeed: 8, label: "#1 Seed vs #8 Seed" },
-  { id: 2, highSeed: 4, lowSeed: 5, label: "#4 Seed vs #5 Seed" },
-  { id: 3, highSeed: 3, lowSeed: 6, label: "#3 Seed vs #6 Seed" },
-  { id: 4, highSeed: 2, lowSeed: 7, label: "#2 Seed vs #7 Seed" },
+export const QF_SLOTS: { id: number; homeGroup: string; awayGroup: string; label: string }[] = [
+  { id: 1, homeGroup: "A", awayGroup: "H", label: "Group A Winner vs Group H Winner" },
+  { id: 2, homeGroup: "D", awayGroup: "E", label: "Group D Winner vs Group E Winner" },
+  { id: 3, homeGroup: "C", awayGroup: "F", label: "Group C Winner vs Group F Winner" },
+  { id: 4, homeGroup: "B", awayGroup: "G", label: "Group B Winner vs Group G Winner" },
 ];
 
 /** @deprecated — use QF_SLOTS. Kept for any legacy references. */
 export const QF_SEEDS = QF_SLOTS.map((s) => ({
   id: s.id,
-  home: `SEED${s.highSeed}`,
-  away: `SEED${s.lowSeed}`,
+  home: `GRP${s.homeGroup}`,
+  away: `GRP${s.awayGroup}`,
 }));
 
 export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
@@ -251,9 +251,13 @@ export function resolveToken(token: string, picks: BracketPicks): string {
   return place === 1 ? picks.groups[group].first : (picks.groups[group].second ?? "");
 }
 
-/** @deprecated — use QF_SLOTS + getGroupWinners */
-export function getQFTeams(_matchId: number, _picks: BracketPicks): [string, string] {
-  return ["", ""];
+export function getQFTeams(matchId: number, picks: BracketPicks): [string, string] {
+  const slot = QF_SLOTS.find((s) => s.id === matchId);
+  if (!slot) return ["", ""];
+  return [
+    picks.groups[slot.homeGroup]?.first || "",
+    picks.groups[slot.awayGroup]?.first || "",
+  ];
 }
 
 export function getSFTeams(matchId: number, picks: BracketPicks): [string, string] {
