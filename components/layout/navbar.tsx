@@ -77,6 +77,13 @@ export function Navbar() {
                 >
                   Wallet
                 </Link>
+                <Link
+                  href="/account"
+                  className="block px-4 py-2 text-sm text-gray-300 hover:bg-brand-surface"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  🔑 Change Password
+                </Link>
                 {session?.user?.isAdmin && (
                   <Link
                     href="/admin"
