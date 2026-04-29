@@ -22,6 +22,7 @@ export const TEAM_LOGOS: Record<string, string> = {
   "PA Classics":                    "/logos/pa-classics.jpg",
   "PDA Hibernian":                  "/logos/pda-hibernian.jpg",
   "Players Development Academy":    "/logos/pda.jpg",
+  "The Players Progression Academy": "/logos/players-progression-academy.jpg",
   "Queen City Mutiny FC":           "/logos/queen-city-mutiny.jpg",
   "Real Futbol Academy":            "/logos/real-futbol-academy.jpg",
   "Sporting Athletic Club":         "/logos/sporting-athletic.jpg",
@@ -36,5 +37,4 @@ export const TEAM_LOGOS: Record<string, string> = {
 };
 
 export function getLogoUrl(teamName: string): string | null {
-  return TEAM_LOGOS[teamName] ?? null;
-}
+  r

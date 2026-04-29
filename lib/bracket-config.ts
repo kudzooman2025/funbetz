@@ -22,7 +22,7 @@ export const BRACKET_LOCK_TIME = new Date("2026-05-01T11:45:00Z"); // 7:45am EDT
 
 export const GROUPS: Record<string, string[]> = {
   A: ["Carolina Velocity FC", "Cedar Stars Academy Monmouth", "Bethesda SC", "Springfield SYC"],
-  B: ["Alexandria SA", "TBD (Group B)", "Carolina Core FC", "West Virginia Soccer"],
+  B: ["Alexandria SA", "The Players Progression Academy", "Carolina Core FC", "West Virginia Soccer"],
   C: ["FC DELCO", "Triangle United SA", "The Football Academy", "The St. James FC"],
   D: ["Baltimore Armour", "PA Classics Harrisburg", "FC Richmond", "Ironbound Soccer Club"],
   E: ["Coppermine SC", "Virginia Rush", "Fox Soccer Academy Carolinas", "PDA Hibernian"],
@@ -53,7 +53,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19748, home: "Bethesda SC",                   away: "Springfield SYC",               group: "A", round: 1, time: "7:45 AM",  day: 1 },
   { id: 19749, home: "Players Development Academy",   away: "Sporting Athletic Club",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
   { id: 19750, home: "Charlotte Independence SC",     away: "Virginia Revolution SC",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
-  { id: 19755, home: "Alexandria SA",                 away: "TBD (Group B)",                 group: "B", round: 1, time: "9:15 AM",  day: 1 },
+  { id: 19755, home: "Alexandria SA",                 away: "The Players Progression Academy",                 group: "B", round: 1, time: "9:15 AM",  day: 1 },
   { id: 19756, home: "Carolina Core FC",              away: "West Virginia Soccer",          group: "B", round: 1, time: "9:15 AM",  day: 1 },
   { id: 19757, home: "Real Futbol Academy",           away: "Wake FC",                       group: "G", round: 1, time: "9:15 AM",  day: 1 },
   { id: 19758, home: "Loudoun Soccer Club",           away: "Keystone FC",                   group: "G", round: 1, time: "9:15 AM",  day: 1 },
@@ -70,7 +70,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19701, home: "Virginia Revolution SC",        away: "Players Development Academy",   group: "H", round: 1, time: "1:45 PM",  day: 1 },
   { id: 19702, home: "Sporting Athletic Club",        away: "Charlotte Independence SC",     group: "H", round: 1, time: "1:45 PM",  day: 1 },
   { id: 19723, home: "West Virginia Soccer",          away: "Alexandria SA",                 group: "B", round: 1, time: "3:15 PM",  day: 1 },
-  { id: 19724, home: "TBD (Group B)",                 away: "Carolina Core FC",              group: "B", round: 1, time: "3:15 PM",  day: 1 },
+  { id: 19724, home: "The Players Progression Academy",                 away: "Carolina Core FC",              group: "B", round: 1, time: "3:15 PM",  day: 1 },
   { id: 19725, home: "Keystone FC",                   away: "Real Futbol Academy",           group: "G", round: 1, time: "3:15 PM",  day: 1 },
   { id: 19726, home: "Wake FC",                       away: "Loudoun Soccer Club",           group: "G", round: 1, time: "3:15 PM",  day: 1 },
   { id: 19731, home: "Ironbound Soccer Club",         away: "Baltimore Armour",              group: "D", round: 1, time: "4:45 PM",  day: 1 },
@@ -88,7 +88,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19789, home: "Players Development Academy",   away: "Charlotte Independence SC",     group: "H", round: 2, time: "9:00 AM",  day: 2 },
   { id: 19790, home: "Virginia Revolution SC",        away: "Sporting Athletic Club",        group: "H", round: 2, time: "9:00 AM",  day: 2 },
   { id: 19771, home: "Alexandria SA",                 away: "Carolina Core FC",              group: "B", round: 2, time: "10:30 AM", day: 2 },
-  { id: 19772, home: "West Virginia Soccer",          away: "TBD (Group B)",                 group: "B", round: 2, time: "10:30 AM", day: 2 },
+  { id: 19772, home: "West Virginia Soccer",          away: "The Players Progression Academy",                 group: "B", round: 2, time: "10:30 AM", day: 2 },
   { id: 19773, home: "Real Futbol Academy",           away: "Loudoun Soccer Club",           group: "G", round: 2, time: "10:30 AM", day: 2 },
   { id: 19774, home: "Keystone FC",                   away: "Wake FC",                       group: "G", round: 2, time: "10:30 AM", day: 2 },
   { id: 19779, home: "Baltimore Armour",              away: "FC Richmond",                   group: "D", round: 2, time: "12:00 PM", day: 2 },
@@ -163,18 +163,18 @@ export const TEAM_RANKINGS: Record<string, number> = {
  * modular11 match IDs map to QF slots 1–4 in bracket order:
  *   Slot 1 → 19819 | Slot 2 → 19820 | Slot 3 → 19821 | Slot 4 → 19822
  */
-export const QF_SLOTS: { id: number; homeGroup: string; awayGroup: string; label: string }[] = [
-  { id: 1, homeGroup: "A", awayGroup: "H", label: "Group A Winner vs Group H Winner" },
-  { id: 2, homeGroup: "D", awayGroup: "E", label: "Group D Winner vs Group E Winner" },
-  { id: 3, homeGroup: "C", awayGroup: "F", label: "Group C Winner vs Group F Winner" },
-  { id: 4, homeGroup: "B", awayGroup: "G", label: "Group B Winner vs Group G Winner" },
+export const QF_SLOTS: { id: number; highSeed: number; lowSeed: number; label: string }[] = [
+  { id: 1, highSeed: 1, lowSeed: 8, label: "#1 Seed vs #8 Seed" },
+  { id: 2, highSeed: 4, lowSeed: 5, label: "#4 Seed vs #5 Seed" },
+  { id: 3, highSeed: 3, lowSeed: 6, label: "#3 Seed vs #6 Seed" },
+  { id: 4, highSeed: 2, lowSeed: 7, label: "#2 Seed vs #7 Seed" },
 ];
 
 /** @deprecated — use QF_SLOTS. Kept for any legacy references. */
 export const QF_SEEDS = QF_SLOTS.map((s) => ({
   id: s.id,
-  home: `GRP${s.homeGroup}`,
-  away: `GRP${s.awayGroup}`,
+  home: `SEED${s.highSeed}`,
+  away: `SEED${s.lowSeed}`,
 }));
 
 export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
@@ -251,13 +251,9 @@ export function resolveToken(token: string, picks: BracketPicks): string {
   return place === 1 ? picks.groups[group].first : (picks.groups[group].second ?? "");
 }
 
-export function getQFTeams(matchId: number, picks: BracketPicks): [string, string] {
-  const slot = QF_SLOTS.find((s) => s.id === matchId);
-  if (!slot) return ["", ""];
-  return [
-    picks.groups[slot.homeGroup]?.first || "",
-    picks.groups[slot.awayGroup]?.first || "",
-  ];
+/** @deprecated — use QF_SLOTS + getGroupWinners */
+export function getQFTeams(_matchId: number, _picks: BracketPicks): [string, string] {
+  return ["", ""];
 }
 
 export function getSFTeams(matchId: number, picks: BracketPicks): [string, string] {
