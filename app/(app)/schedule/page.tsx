@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { GROUPS, GROUP_GAMES, TEAM_RANKINGS } from "@/lib/bracket-config";
@@ -62,10 +62,15 @@ function TeamLogo({ team, size = 40 }: { team: string; size?: number }) {
 }
 
 // ─── Game Card ────────────────────────────────────────────────────────────────
-function GameCard({ home, away, group, time, round }: {
-  home: string; away: string; group: string; time: string; round: number;
+function GameCard({ home, away, group, time, round, score }: {
+  home: string; away: string; group: string; time: string; round: number; score?: string;
 }) {
   const colors = GROUP_COLORS[group];
+  const parts = score ? score.split("-") : null;
+  const homeGoals = parts?.[0];
+  const awayGoals = parts?.[1];
+  const hasScore = homeGoals !== undefined && awayGoals !== undefined;
+
   return (
     <div className={`rounded-xl border ${colors.border} ${colors.bg} p-3`}>
       <div className="flex items-center justify-between mb-2">
@@ -75,14 +80,22 @@ function GameCard({ home, away, group, time, round }: {
       <div className="flex items-center gap-2">
         <TeamLogo team={home} size={36} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{home}</p>
+          <p className={`text-sm font-semibold truncate ${hasScore && Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{home}</p>
           {TEAM_RANKINGS[home] && (
             <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
           )}
         </div>
-        <span className="text-brand-muted font-bold text-sm px-1">vs</span>
+        {hasScore ? (
+          <div className="flex items-center gap-1 px-2">
+            <span className={`text-lg font-bold ${Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{homeGoals}</span>
+            <span className="text-brand-muted font-bold text-sm">–</span>
+            <span className={`text-lg font-bold ${Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{awayGoals}</span>
+          </div>
+        ) : (
+          <span className="text-brand-muted font-bold text-sm px-1">vs</span>
+        )}
         <div className="flex-1 min-w-0 text-right">
-          <p className="text-sm font-semibold text-white truncate">{away}</p>
+          <p className={`text-sm font-semibold truncate ${hasScore && Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{away}</p>
           {TEAM_RANKINGS[away] && (
             <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
           )}
@@ -97,6 +110,14 @@ function GameCard({ home, away, group, time, round }: {
 export default function SchedulePage() {
   const [activeDay, setActiveDay] = useState<"1" | "2" | "knockout">("1");
   const [activeGroup, setActiveGroup] = useState<string>("ALL");
+  const [scores, setScores] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("/api/scores?challengeId=va26-u13-ad")
+      .then((r) => r.json())
+      .then((data) => setScores(data))
+      .catch(() => {});
+  }, []);
 
   const day1Games = GROUP_GAMES.filter((g) => g.day === 1);
   const day2Games = GROUP_GAMES.filter((g) => g.day === 2);
@@ -191,7 +212,7 @@ export default function SchedulePage() {
             Thursday, May 1 · {filteredDay1.length} games
           </p>
           {filteredDay1.map((game) => (
-            <GameCard key={game.id} {...game} />
+            <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
           ))}
         </div>
       )}
@@ -203,7 +224,7 @@ export default function SchedulePage() {
             Friday, May 2 · {filteredDay2.length} games
           </p>
           {filteredDay2.map((game) => (
-            <GameCard key={game.id} {...game} />
+            <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
           ))}
         </div>
       )}
@@ -269,16 +290,4 @@ export default function SchedulePage() {
                         <p className="text-sm text-white font-medium truncate">{team}</p>
                       </div>
                       {TEAM_RANKINGS[team] && (
-                        <span className="text-xs text-brand-muted flex-shrink-0">#{TEAM_RANKINGS[team]}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
+                        <span cla

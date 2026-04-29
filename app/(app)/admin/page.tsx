@@ -13,7 +13,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { GROUPS, QF_SLOTS, SF_SEEDS } from "@/lib/bracket-config";
+import { GROUPS, GROUP_GAMES, QF_SLOTS, SF_SEEDS } from "@/lib/bracket-config";
 
 const CHALLENGE_ID = "va26-u13-ad";
 
@@ -86,7 +86,7 @@ export default function AdminPage() {
         // Pre-fill pending selects from stored values
         const ko: Record<string, string> = {};
         for (const r of data) {
-          if (["qf", "sf", "final", "qf_home", "qf_away", "sf_home", "sf_away", "final_home", "final_away"].includes(r.round)) {
+          if (["qf", "sf", "final", "qf_home", "qf_away", "sf_home", "sf_away", "final_home", "final_away", "group_score", "qf_score", "sf_score", "final_score"].includes(r.round)) {
             ko[`${r.round}_${r.key}`] = r.winner;
           }
         }
@@ -354,6 +354,17 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* Group Play Scores */}
+      <GroupScoreSection
+        games={GROUP_GAMES}
+        pending={pendingKO}
+        setPending={setPendingKO}
+        storedWinner={storedWinner}
+        saving={saving}
+        onSave={saveResult}
+        onClear={clearResult}
+      />
+
       {/* QF Matchup Setup */}
       <MatchupSection
         title="QF Matchups"
@@ -576,6 +587,161 @@ export default function AdminPage() {
         </section>
       )}
     </div>
+  );
+}
+
+// ── GroupScoreSection component ──────────────────────────────────────────────
+
+import { GroupGame } from "@/lib/bracket-config";
+
+function GroupScoreSection({
+  games,
+  pending,
+  setPending,
+  storedWinner,
+  saving,
+  onSave,
+  onClear,
+}: {
+  games: GroupGame[];
+  pending: Record<string, string>;
+  setPending: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  storedWinner: (round: string, key: string) => ResultRow | undefined;
+  saving: string | null;
+  onSave: (round: string, key: string) => Promise<void>;
+  onClear: (round: string, key: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeDay, setActiveDay] = useState<1 | 2>(1);
+
+  const dayGames = games.filter((g) => g.day === activeDay);
+  // Group by group letter
+  const byGroup: Record<string, GroupGame[]> = {};
+  for (const g of dayGames) {
+    if (!byGroup[g.group]) byGroup[g.group] = [];
+    byGroup[g.group].push(g);
+  }
+
+  const savedCount = games.filter((g) =>
+    storedWinner("group_score", String(g.id))
+  ).length;
+
+  return (
+    <section className="bg-gray-800 rounded-xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">
+            Group Play Scores
+            {savedCount > 0 && (
+              <span className="ml-2 text-xs text-brand-green font-normal">
+                {savedCount}/{games.length} entered
+              </span>
+            )}
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">Enter final scores for all group stage games</p>
+        </div>
+        <button
+          onClick={() => setOpen(!open)}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {open ? "Collapse" : "Enter Scores"}
+        </button>
+      </div>
+
+      {open && (
+        <>
+          {/* Day tabs */}
+          <div className="flex gap-2">
+            {([1, 2] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setActiveDay(d)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeDay === d
+                    ? "bg-brand-green text-black"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                📅 May {d === 1 ? "1" : "2"}
+              </button>
+            ))}
+          </div>
+
+          {/* Games by group */}
+          <div className="space-y-4">
+            {Object.entries(byGroup).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupGames]) => (
+              <div key={group}>
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
+                  Group {group}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {groupGames.map((game) => {
+                    const round = "group_score";
+                    const key = String(game.id);
+                    const stateKey = `${round}_${key}`;
+                    const stored = storedWinner(round, key);
+                    const isSaving = saving === stateKey;
+                    const val = pending[stateKey] ?? stored?.winner ?? "";
+                    const parts = val.split("-");
+                    const homeVal = parts[0] ?? "";
+                    const awayVal = parts[1] ?? "";
+
+                    const setScore = (h: string, a: string) => {
+                      setPending((p) => ({ ...p, [stateKey]: `${h}-${a}` }));
+                    };
+
+                    return (
+                      <div key={game.id} className="bg-gray-900 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-400">{game.time} · Round {game.round}</p>
+                          {stored && (
+                            <span className="text-xs text-brand-green font-bold">{stored.winner}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-white font-medium truncate">
+                          {game.home} <span className="text-gray-500 text-xs">vs</span> {game.away}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number" min="0" max="20"
+                            value={homeVal}
+                            onChange={(e) => setScore(e.target.value, awayVal)}
+                            placeholder="0"
+                            className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+                          />
+                          <span className="text-gray-400 font-bold text-xs">–</span>
+                          <input
+                            type="number" min="0" max="20"
+                            value={awayVal}
+                            onChange={(e) => setScore(homeVal, e.target.value)}
+                            placeholder="0"
+                            className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+                          />
+                          <button
+                            onClick={() => onSave(round, key)}
+                            disabled={homeVal === "" || awayVal === "" || isSaving}
+                            className="px-3 py-1 bg-brand-green hover:bg-green-500 disabled:opacity-40 text-black text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            {isSaving ? "…" : "Save"}
+                          </button>
+                          {stored && (
+                            <button
+                              onClick={() => onClear(round, key)}
+                              className="px-2 py-1 text-gray-400 hover:text-red-400 text-xs transition-colors"
+                              title="Clear score"
+                            >✕</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
