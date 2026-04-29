@@ -20,17 +20,17 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }>
 
 // ─── Knockout schedule (fixed times) ─────────────────────────────────────────
 const KNOCKOUT_SCHEDULE = [
-  { round: "Quarterfinals", day: "Saturday, May 3", slots: [
+  { round: "Quarterfinals", day: "Sunday, May 3", slots: [
     { time: "8:00 AM", label: "QF 1 — #1 Seed vs #8 Seed" },
     { time: "8:00 AM", label: "QF 2 — #4 Seed vs #5 Seed" },
     { time: "8:00 AM", label: "QF 3 — #3 Seed vs #6 Seed" },
     { time: "8:00 AM", label: "QF 4 — #2 Seed vs #7 Seed" },
   ]},
-  { round: "Semifinals", day: "Saturday, May 3", slots: [
+  { round: "Semifinals", day: "Sunday, May 3", slots: [
     { time: "1:00 PM", label: "SF 1 — Winner QF1 vs Winner QF2" },
     { time: "1:00 PM", label: "SF 2 — Winner QF3 vs Winner QF4" },
   ]},
-  { round: "Final", day: "Sunday, May 4", slots: [
+  { round: "Final", day: "Monday, May 4", slots: [
     { time: "8:00 AM", label: "Championship Final" },
   ]},
 ];
@@ -209,7 +209,7 @@ export default function SchedulePage() {
       {activeDay === "1" && (
         <div className="space-y-2">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
-            Thursday, May 1 · {filteredDay1.length} games
+            Friday, May 1 · {filteredDay1.length} games
           </p>
           {filteredDay1.map((game) => (
             <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
@@ -221,7 +221,7 @@ export default function SchedulePage() {
       {activeDay === "2" && (
         <div className="space-y-2">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
-            Friday, May 2 · {filteredDay2.length} games
+            Saturday, May 2 · {filteredDay2.length} games
           </p>
           {filteredDay2.map((game) => (
             <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
