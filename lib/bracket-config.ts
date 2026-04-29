@@ -102,50 +102,50 @@ export const GROUP_GAMES: GroupGame[] = [
 ];
 
 /**
- * National MLS NEXT rankings as of April 14, 2026.
- * Source: MLSN Cup Virginia Regional May 1–4 2026 spreadsheet.
- * Lower number = higher rank (e.g., #194 FC DELCO is the top-ranked team).
+ * National MLS NEXT rankings as of April 28, 2026.
+ * Source: MLSN Cup Virginia Regional May 1–4 2026 spreadsheet (28Apr update).
+ * Lower number = higher rank (e.g., #206 FC DELCO is the top-ranked team).
  */
 export const TEAM_RANKINGS: Record<string, number> = {
   // Group A
-  "Carolina Velocity FC":          207,
-  "Springfield SYC":               378,
-  "Cedar Stars Academy Monmouth": 3894,
-  "Bethesda SC":                   634,
+  "Carolina Velocity FC":          211,
+  "Springfield SYC":               380,
+  "Cedar Stars Academy Monmouth": 4131,
+  "Bethesda SC":                   563,
   // Group B
-  "Alexandria SA":                 528,
-  "Carolina Core FC":             1050,
-  "West Virginia Soccer":         1547,
+  "Alexandria SA":                 561,
+  "Carolina Core FC":             1120,
+  "West Virginia Soccer":         1697,
   // Group C
-  "FC DELCO":                      194,
-  "The Football Academy":          623,
-  "The St. James FC":              765,
-  "Triangle United SA":           1907,
+  "FC DELCO":                      206,
+  "The Football Academy":          778,
+  "The St. James FC":              734,
+  "Triangle United SA":           1788,
   // Group D
-  "Baltimore Armour":              481,
-  "Ironbound Soccer Club":         461,
-  "FC Richmond":                   875,
-  "PA Classics Harrisburg":       1940,
+  "Baltimore Armour":              469,
+  "Ironbound Soccer Club":         397,
+  "FC Richmond":                   918,
+  "PA Classics Harrisburg":       2078,
   // Group E
-  "Coppermine SC":                 331,
-  "PDA Hibernian":                 909,
-  "Fox Soccer Academy Carolinas":  656,
-  "Virginia Rush":                2687,
+  "Coppermine SC":                 319,
+  "PDA Hibernian":                 866,
+  "Fox Soccer Academy Carolinas":  666,
+  "Virginia Rush":                2376,
   // Group F
-  "McLean Youth Soccer":           502,
-  "Trenton City Soccer Club":     1168,
-  "Queen City Mutiny FC":          652,
-  "PA Classics":                  1670,
+  "McLean Youth Soccer":           615,
+  "Trenton City Soccer Club":      995,
+  "Queen City Mutiny FC":          738,
+  "PA Classics":                  1910,
   // Group G
-  "Loudoun Soccer Club":           390,
-  "Real Futbol Academy":           844,
-  "Wake FC":                      1826,
-  "Keystone FC":                  1858,
+  "Loudoun Soccer Club":           487,
+  "Real Futbol Academy":           897,
+  "Wake FC":                      1908,
+  "Keystone FC":                  1940,
   // Group H
-  "Charlotte Independence SC":     696,
-  "Players Development Academy":   477,
-  "Virginia Revolution SC":       1470,
-  "Sporting Athletic Club":       1863,
+  "Charlotte Independence SC":     750,
+  "Players Development Academy":   560,
+  "Virginia Revolution SC":       1320,
+  "Sporting Athletic Club":       2123,
 };
 
 /**

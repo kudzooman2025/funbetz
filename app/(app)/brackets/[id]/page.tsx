@@ -459,6 +459,14 @@ export default function BracketPage() {
             ? "Bracket is locked. Scores update as results come in."
             : `Locks ${lockDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${lockDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} EDT`}
         </p>
+        <a
+          href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 mt-2 text-xs text-brand-gold hover:text-yellow-300 transition-colors font-medium"
+        >
+          🌐 View Official MLS NEXT Standings &amp; Schedule →
+        </a>
       </div>
 
       {/* Scoring key */}

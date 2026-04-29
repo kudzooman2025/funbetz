@@ -43,6 +43,14 @@ export function Navbar() {
           <Link href="/brackets" className="text-gray-300 hover:text-brand-green transition-colors">
             Brackets
           </Link>
+          <a
+            href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-gold hover:text-yellow-300 transition-colors text-xs font-semibold border border-brand-gold/40 px-2.5 py-1 rounded-full"
+          >
+            🌐 Official Standings
+          </a>
         </nav>
 
         {/* Right side: wallet + user */}
@@ -89,27 +97,35 @@ export function Navbar() {
 
       {/* Mobile tab strip — scrollable horizontal nav under the header bar */}
       <nav className="md:hidden flex overflow-x-auto border-t border-brand-border bg-brand-card scrollbar-hide">
-        <Link href="/dashboard" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/dashboard" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🏠 Home
         </Link>
-        <Link href="/games" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/games" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🎮 Games
         </Link>
-        <Link href="/parlays" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/parlays" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🎟️ Parlays
         </Link>
-        <Link href="/leaderboard" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/leaderboard" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🏆 Ranks
         </Link>
-        <Link href="/tournaments" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/tournaments" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           ⭐ Groups
         </Link>
-        <Link href="/brackets" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/brackets" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🏆 Brackets
         </Link>
-        <Link href="/wallet" className="flex-shrink-0 px-4 py-2 text-xs text-brand-muted hover:text-brand-green whitespace-nowrap">
+        <Link href="/wallet" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           💰 Wallet
         </Link>
+        <a
+          href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 px-4 py-2.5 text-xs text-brand-gold hover:text-yellow-300 whitespace-nowrap font-medium"
+        >
+          🌐 Official Site
+        </a>
       </nav>
     </header>
   );

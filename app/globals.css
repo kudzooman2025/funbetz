@@ -4,15 +4,17 @@
   --color-brand-green: #00C853;
   --color-brand-gold: #FFD600;
   --color-brand-dark: #0A0E17;
-  --color-brand-card: #141926;
-  --color-brand-border: #1E2536;
-  --color-brand-muted: #6B7280;
-  --color-brand-surface: #1A2035;
+  --color-brand-card: #161C2D;
+  --color-brand-border: #2A3350;
+  --color-brand-muted: #94A3B8;
+  --color-brand-surface: #1E2540;
 }
 
 body {
   background-color: var(--color-brand-dark);
-  color: #F9FAFB;
+  color: #F1F5F9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Ticket dashed border effect */
