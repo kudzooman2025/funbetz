@@ -43,6 +43,9 @@ export function Navbar() {
           <Link href="/brackets" className="text-gray-300 hover:text-brand-green transition-colors">
             Brackets
           </Link>
+          <Link href="/schedule" className="text-gray-300 hover:text-brand-green transition-colors">
+            Schedule
+          </Link>
           <a
             href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
             target="_blank"
@@ -114,6 +117,9 @@ export function Navbar() {
         </Link>
         <Link href="/brackets" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           🏆 Brackets
+        </Link>
+        <Link href="/schedule" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
+          📅 Schedule
         </Link>
         <Link href="/wallet" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           💰 Wallet

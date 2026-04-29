@@ -162,6 +162,13 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link
+          href="/schedule"
+          className="bg-brand-surface border border-brand-green/40 rounded-lg p-4 text-center text-sm hover:border-brand-green transition-colors"
+        >
+          <div className="text-lg mb-1">📅</div>
+          <span className="text-brand-green font-semibold">Schedule</span>
+        </Link>
+        <Link
           href="/parlays"
           className="bg-brand-surface border border-brand-border rounded-lg p-4 text-center text-sm hover:border-brand-green transition-colors"
         >
@@ -181,13 +188,6 @@ export default function DashboardPage() {
         >
           <div className="text-lg mb-1">&#128176;</div>
           Wallet
-        </Link>
-        <Link
-          href="/ticket"
-          className="bg-brand-surface border border-brand-border rounded-lg p-4 text-center text-sm hover:border-brand-green transition-colors"
-        >
-          <div className="text-lg mb-1">&#127903;</div>
-          Build Ticket
         </Link>
       </div>
     </div>
