@@ -8,7 +8,7 @@ import {
   ROUND_POINTS, MAX_SCORE, TEAM_RANKINGS,
   type BracketPicks, type MatchScore, type GroupGame,
   EMPTY_PICKS, EMPTY_SCORE,
-  getGroupWinners, getSFTeams, getFinalTeams,
+  getGroupWinners, getQFTeams, getSFTeams, getFinalTeams,
   isComplete, pickProgress,
 } from "@/lib/bracket-config";
 
@@ -651,58 +651,24 @@ export default function BracketPage() {
               Quarterfinals — +{ROUND_POINTS.qf}pt each
             </h2>
             <p className="text-[11px] text-brand-muted mb-3">
-              Seedings (#1–#8) are determined after group play by PPM → Goal Diff → Goals For.
-              Pick who you think wins each seed matchup from your predicted group winners.
+              Group winners are paired by group. Pick your group winners above and the matchups auto-fill.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {QF_SLOTS.map((slot) => {
-                const groupWinners = getGroupWinners(picks).filter(Boolean);
-                const pickedTeam = picks.qf[String(slot.id)] || "";
+                const [home, away] = getQFTeams(slot.id, picks);
                 return (
-                  <div key={slot.id} className="bg-brand-card border border-brand-border rounded-xl p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-brand-muted font-medium uppercase tracking-wide">
-                        QF {slot.id}
-                      </span>
-                      <span className="text-[10px] text-brand-gold">+{ROUND_POINTS.qf}pt</span>
-                    </div>
-                    <div className="text-[11px] text-gray-400 font-semibold">{slot.label}</div>
-                    {groupWinners.length < 8 && (
-                      <p className="text-[10px] text-amber-500 italic">Pick all 8 group winners first</p>
-                    )}
-                    <select
-                      disabled={locked || groupWinners.length < 8}
-                      value={pickedTeam}
-                      onChange={(e) => setQFPick(slot.id, e.target.value)}
-                      className={`w-full text-xs rounded-lg px-2 py-1.5 border focus:outline-none truncate ${
-                        pickedTeam
-                          ? "bg-brand-green/10 border-brand-green text-brand-green font-semibold"
-                          : "bg-brand-surface border-brand-border text-gray-400"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <option value="">— pick winner —</option>
-                      {groupWinners.map((team) => {
-                        const rank = TEAM_RANKINGS[team];
-                        return (
-                          <option key={team} value={team}>
-                            {team}{rank ? ` (#${rank})` : ""}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    {pickedTeam && (
-                      <div className="text-[10px] text-brand-green truncate">✓ {pickedTeam.split(" ")[0]}</div>
-                    )}
-                    {pickedTeam && groupWinners.length === 8 && (
-                      <ScoreInput
-                        homeTeam={groupWinners[slot.highSeed - 1] || "Seed " + slot.highSeed}
-                        awayTeam={groupWinners[slot.lowSeed - 1] || "Seed " + slot.lowSeed}
-                        score={picks.qfScores?.[String(slot.id)] ?? EMPTY_SCORE}
-                        locked={locked}
-                        onChange={(s) => setQFScore(slot.id, s)}
-                      />
-                    )}
-                  </div>
+                  <MatchupPick
+                    key={slot.id}
+                    label={`QF ${slot.id} · Grp ${slot.homeGroup} vs ${slot.awayGroup}`}
+                    home={home}
+                    away={away}
+                    picked={picks.qf[String(slot.id)] || ""}
+                    locked={locked}
+                    pointValue={ROUND_POINTS.qf}
+                    onPick={(t) => setQFPick(slot.id, t)}
+                    score={picks.qfScores?.[String(slot.id)] ?? EMPTY_SCORE}
+                    onScore={(s) => setQFScore(slot.id, s)}
+                  />
                 );
               })}
             </div>
