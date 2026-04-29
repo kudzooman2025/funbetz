@@ -21,14 +21,14 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }>
 // ─── Knockout schedule (fixed times) ─────────────────────────────────────────
 const KNOCKOUT_SCHEDULE = [
   { round: "Quarterfinals", day: "Sunday, May 3", slots: [
-    { time: "8:00 AM", label: "QF 1 — #1 Seed vs #8 Seed" },
-    { time: "8:00 AM", label: "QF 2 — #4 Seed vs #5 Seed" },
-    { time: "8:00 AM", label: "QF 3 — #3 Seed vs #6 Seed" },
-    { time: "8:00 AM", label: "QF 4 — #2 Seed vs #7 Seed" },
+    { time: "8:00 AM", label: "QF 1 — Group A Winner vs Group H Winner" },
+    { time: "8:00 AM", label: "QF 2 — Group D Winner vs Group E Winner" },
+    { time: "8:00 AM", label: "QF 3 — Group C Winner vs Group F Winner" },
+    { time: "8:00 AM", label: "QF 4 — Group B Winner vs Group G Winner" },
   ]},
   { round: "Semifinals", day: "Sunday, May 3", slots: [
-    { time: "1:00 PM", label: "SF 1 — Winner QF1 vs Winner QF2" },
-    { time: "1:00 PM", label: "SF 2 — Winner QF3 vs Winner QF4" },
+    { time: "1:00 PM", label: "SF 1 — Winner QF1 (A/H) vs Winner QF2 (D/E)" },
+    { time: "1:00 PM", label: "SF 2 — Winner QF3 (C/F) vs Winner QF4 (B/G)" },
   ]},
   { round: "Final", day: "Monday, May 4", slots: [
     { time: "8:00 AM", label: "Championship Final" },
@@ -250,13 +250,24 @@ export default function SchedulePage() {
           ))}
 
           <div className="bg-brand-surface border border-brand-border rounded-xl p-4 mt-4">
-            <p className="text-xs text-brand-muted mb-3 font-semibold uppercase tracking-widest">QF Seeding Format</p>
+            <p className="text-xs text-brand-muted mb-3 font-semibold uppercase tracking-widest">Knockout Format</p>
             <p className="text-sm text-white leading-relaxed">
-              The 8 group winners are ranked #1–#8 by points per match, then goal difference, then goals scored.
+              Group winners are paired by group for the quarterfinals. Semifinal and Final matchups follow the bracket below.
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              {["#1 vs #8","#4 vs #5","#3 vs #6","#2 vs #7"].map((m) => (
-                <div key={m} className="bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-center text-brand-muted">{m}</div>
+            <div className="mt-3 space-y-2 text-xs">
+              {[
+                { label: "QF 1", match: "Group A Winner vs Group H Winner" },
+                { label: "QF 2", match: "Group D Winner vs Group E Winner" },
+                { label: "QF 3", match: "Group C Winner vs Group F Winner" },
+                { label: "QF 4", match: "Group B Winner vs Group G Winner" },
+                { label: "SF 1", match: "Winner QF1 (A/H) vs Winner QF2 (D/E)" },
+                { label: "SF 2", match: "Winner QF3 (C/F) vs Winner QF4 (B/G)" },
+                { label: "Final", match: "Winner SF1 vs Winner SF2" },
+              ].map(({ label, match }) => (
+                <div key={label} className="flex items-center gap-2 bg-brand-card border border-brand-border rounded-lg px-3 py-2">
+                  <span className="text-brand-green font-bold w-10 flex-shrink-0">{label}</span>
+                  <span className="text-brand-muted">{match}</span>
+                </div>
               ))}
             </div>
           </div>
