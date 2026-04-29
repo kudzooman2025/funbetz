@@ -290,4 +290,16 @@ export default function SchedulePage() {
                         <p className="text-sm text-white font-medium truncate">{team}</p>
                       </div>
                       {TEAM_RANKINGS[team] && (
-                        <span cla
+                        <span className="text-xs text-brand-muted font-bold">#{TEAM_RANKINGS[team]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
