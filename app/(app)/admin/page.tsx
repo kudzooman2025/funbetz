@@ -313,7 +313,7 @@ export default function AdminPage() {
           {recalculating ? "Calculating…" : "📊 Recalculate Scores"}
         </button>
         <a
-          href={`/brackets/${CHALLENGE_ID}/leaderboard`}
+          href={`/brackets/${CHALLENGE_ID}`}
           className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
         >
           🏆 View Leaderboard
@@ -1061,3 +1061,4 @@ function KnockoutSection({
     </section>
   );
 }
+            
