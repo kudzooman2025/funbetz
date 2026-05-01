@@ -21,14 +21,14 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }>
 
 const KNOCKOUT_SCHEDULE = [
   { round: "Quarterfinals", day: "Saturday, May 3", slots: [
-    { time: "8:00 AM", label: "QF 1 — #1 Seed vs #8 Seed" },
-    { time: "8:00 AM", label: "QF 2 — #4 Seed vs #5 Seed" },
-    { time: "8:00 AM", label: "QF 3 — #3 Seed vs #6 Seed" },
-    { time: "8:00 AM", label: "QF 4 — #2 Seed vs #7 Seed" },
+    { time: "8:00 AM", label: "QF 1 — Group A Winner vs Group H Winner" },
+    { time: "8:00 AM", label: "QF 2 — Group D Winner vs Group E Winner" },
+    { time: "8:00 AM", label: "QF 3 — Group C Winner vs Group F Winner" },
+    { time: "8:00 AM", label: "QF 4 — Group B Winner vs Group G Winner" },
   ]},
   { round: "Semifinals", day: "Saturday, May 3", slots: [
-    { time: "1:00 PM", label: "SF 1 — Winner QF1 vs Winner QF2" },
-    { time: "1:00 PM", label: "SF 2 — Winner QF3 vs Winner QF4" },
+    { time: "1:00 PM", label: "SF 1 — Winner QF1 (A/H) vs Winner QF2 (D/E)" },
+    { time: "1:00 PM", label: "SF 2 — Winner QF3 (C/F) vs Winner QF4 (B/G)" },
   ]},
   { round: "Final", day: "Sunday, May 4", slots: [
     { time: "8:00 AM", label: "Championship Final" },

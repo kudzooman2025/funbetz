@@ -8,7 +8,7 @@
  *   → Final        (May 4 8am, 1 game)
  *
  * Only GROUP WINNERS advance — no Round of 16.
- * QF seeding: A1 vs B1 | C1 vs D1 | E1 vs F1 | G1 vs H1
+ * QF pairings: A vs H | D vs E | C vs F | B vs G (predetermined, not seed-based)
  *
  * modular11 playoff match IDs:
  *   QF:    19819, 19820, 19821, 19822
@@ -173,8 +173,8 @@ export const QF_SLOTS: { id: number; homeGroup: string; awayGroup: string; label
 /** @deprecated — use QF_SLOTS. Kept for any legacy references. */
 export const QF_SEEDS = QF_SLOTS.map((s) => ({
   id: s.id,
-  home: `GRP${s.homeGroup}`,
-  away: `GRP${s.awayGroup}`,
+  home: `GROUP_${s.homeGroup}`,
+  away: `GROUP_${s.awayGroup}`,
 }));
 
 export const SF_SEEDS: { id: number; homeQF: number; awayQF: number }[] = [
@@ -251,13 +251,9 @@ export function resolveToken(token: string, picks: BracketPicks): string {
   return place === 1 ? picks.groups[group].first : (picks.groups[group].second ?? "");
 }
 
-export function getQFTeams(matchId: number, picks: BracketPicks): [string, string] {
-  const slot = QF_SLOTS.find((s) => s.id === matchId);
-  if (!slot) return ["", ""];
-  return [
-    picks.groups[slot.homeGroup]?.first || "",
-    picks.groups[slot.awayGroup]?.first || "",
-  ];
+/** @deprecated — use QF_SLOTS + getGroupWinners */
+export function getQFTeams(_matchId: number, _picks: BracketPicks): [string, string] {
+  return ["", ""];
 }
 
 export function getSFTeams(matchId: number, picks: BracketPicks): [string, string] {
