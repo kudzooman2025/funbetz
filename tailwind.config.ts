@@ -7,15 +7,8 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        brand: {
-          green: "#00C853",
-          gold: "#FFD600",
-          dark: "#0A0E17",
-          card: "#141926",
-          border: "#1E2536",
-        },
-      },
+      // Brand colors are defined in globals.css via @theme (Tailwind v4).
+      // Do not re-declare them here — globals.css is the single source of truth.
       fontFamily: {
         mono: ["var(--font-jetbrains-mono)", "monospace"],
       },
