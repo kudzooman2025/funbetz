@@ -7,6 +7,7 @@ import { useTicketStore } from "@/stores/ticket-store";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 import { MIN_PARLAY_GAMES, MAX_PARLAY_GAMES, GAME_BUFFER_HOURS } from "@/lib/constants";
 import type { GameResponse } from "@/lib/types";
+import { getLogoUrl } from "@/lib/team-logos";
 
 const WC_ROUND_NAMES: Record<number, string> = {
   1: "Group Stage · Matchday 1",
@@ -508,6 +509,51 @@ function GamesContent() {
   );
 }
 
+/**
+ * Small team badge: prefers the TheSportsDB badge URL, falls back to a local
+ * logo from /public/logos/ (for MLS NEXT teams), then to an initial-letter
+ * avatar. Uses a plain <img> so no next/image remote-domain config is needed.
+ */
+function TeamBadge({
+  name,
+  badgeUrl,
+  muted = false,
+}: {
+  name: string;
+  badgeUrl: string | null;
+  muted?: boolean;
+}) {
+  const localLogo = getLogoUrl(name);
+  const src = badgeUrl || localLogo;
+
+  if (!src) {
+    return (
+      <span
+        className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 border ${
+          muted
+            ? "bg-brand-surface border-brand-border text-brand-muted"
+            : "bg-brand-surface border-brand-border text-gray-400"
+        }`}
+      >
+        {name.charAt(0)}
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={name}
+      className={`w-6 h-6 rounded-full object-cover flex-shrink-0 ${muted ? "opacity-50" : ""}`}
+      onError={(e) => {
+        // Hide broken images gracefully; the button text still identifies the team
+        (e.currentTarget as HTMLImageElement).style.display = "none";
+      }}
+    />
+  );
+}
+
 function GameRow({
   game,
   isSelected,
@@ -553,12 +599,14 @@ function GameRow({
             <div>{gameTime.split(",").slice(0, 2).join(",")}</div>
             <div>{gameTime.split(",").slice(2).join(",").trim()} ET</div>
           </div>
-          <div className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium border border-brand-border text-brand-muted text-center">
-            {game.homeTeam}
+          <div className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium border border-brand-border text-brand-muted">
+            <TeamBadge name={game.homeTeam} badgeUrl={game.homeTeamBadge} muted />
+            <span className="truncate">{game.homeTeam}</span>
           </div>
-          <span className="text-brand-muted text-xs font-medium">VS</span>
-          <div className="flex-1 py-2.5 px-3 rounded-lg text-sm font-medium border border-brand-border text-brand-muted text-center">
-            {game.awayTeam}
+          <span className="text-brand-muted text-xs font-medium shrink-0">VS</span>
+          <div className="flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium border border-brand-border text-brand-muted">
+            <TeamBadge name={game.awayTeam} badgeUrl={game.awayTeamBadge} muted />
+            <span className="truncate">{game.awayTeam}</span>
           </div>
           <div className="text-[11px] text-brand-muted text-center min-w-[44px] shrink-0">
             <div>🔒</div>
@@ -586,30 +634,32 @@ function GameRow({
         <button
           onClick={onPickHome}
           disabled={disabled && !isSelected}
-          className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border ${
+          className={`flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border ${
             selectedPick === game.homeTeam
               ? "bg-brand-green/20 border-brand-green text-brand-green"
               : "border-brand-border text-gray-300 hover:border-gray-500"
           } ${disabled && !isSelected ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
-          {game.homeTeam}
+          <TeamBadge name={game.homeTeam} badgeUrl={game.homeTeamBadge} />
+          <span className="truncate">{game.homeTeam}</span>
         </button>
 
-        <span className="text-brand-muted text-xs font-medium">
-          {isGolf ? "🏌" : "VS"}
+        <span className="text-brand-muted text-xs font-medium shrink-0">
+          {isGolf ? "⛳" : "VS"}
         </span>
 
         {/* Away team pick */}
         <button
           onClick={onPickAway}
           disabled={disabled && !isSelected}
-          className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border ${
+          className={`flex-1 flex items-center gap-2 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors border ${
             selectedPick === game.awayTeam
               ? "bg-brand-green/20 border-brand-green text-brand-green"
               : "border-brand-border text-gray-300 hover:border-gray-500"
           } ${disabled && !isSelected ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
-          {game.awayTeam}
+          <TeamBadge name={game.awayTeam} badgeUrl={game.awayTeamBadge} />
+          <span className="truncate">{game.awayTeam}</span>
         </button>
       </div>
     </div>
