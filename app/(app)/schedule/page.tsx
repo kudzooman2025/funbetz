@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { GROUPS, GROUP_GAMES, TEAM_RANKINGS } from "@/lib/bracket-config";
 import { getLogoUrl } from "@/lib/team-logos";
 
-// ─── Group colors ────────────────────────────────────────────────────────────
+// Group colors
 const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   A: { bg: "bg-blue-900/30",   border: "border-blue-500/50",   text: "text-blue-400"   },
   B: { bg: "bg-purple-900/30", border: "border-purple-500/50", text: "text-purple-400" },
@@ -18,7 +19,6 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }>
   H: { bg: "bg-yellow-900/30", border: "border-yellow-500/50", text: "text-yellow-400" },
 };
 
-// ─── Knockout schedule (fixed times) ─────────────────────────────────────────
 const KNOCKOUT_SCHEDULE = [
   { round: "Quarterfinals", day: "Saturday, May 3", slots: [
     { time: "8:00 AM", label: "QF 1 — #1 Seed vs #8 Seed" },
@@ -35,7 +35,7 @@ const KNOCKOUT_SCHEDULE = [
   ]},
 ];
 
-// ─── Team Logo Component ──────────────────────────────────────────────────────
+// Team Logo
 function TeamLogo({ team, size = 40 }: { team: string; size?: number }) {
   const logo = getLogoUrl(team);
   if (!logo) {
@@ -50,57 +50,140 @@ function TeamLogo({ team, size = 40 }: { team: string; size?: number }) {
   }
   return (
     <div style={{ width: size, height: size }} className="relative flex-shrink-0">
-      <Image
-        src={logo}
-        alt={team}
-        fill
-        className="object-contain rounded-full"
-        sizes={`${size}px`}
-      />
+      <Image src={logo} alt={team} fill className="object-contain rounded-full" sizes={`${size}px`} />
     </div>
   );
 }
 
-// ─── Game Card ────────────────────────────────────────────────────────────────
-function GameCard({ home, away, group, time, round, score }: {
-  home: string; away: string; group: string; time: string; round: number; score?: string;
+// Game Card with optional inline admin edit
+function GameCard({
+  id, home, away, group, time, round, score, isAdmin, onSave,
+}: {
+  id: number;
+  home: string;
+  away: string;
+  group: string;
+  time: string;
+  round: number;
+  score?: string;
+  isAdmin?: boolean;
+  onSave?: (gameId: string, score: string) => void;
 }) {
   const colors = GROUP_COLORS[group];
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const parts = (score ?? "").split("-");
+  const [homeVal, setHomeVal] = useState(parts[0] ?? "");
+  const [awayVal, setAwayVal] = useState(parts[1] ?? "");
+
+  // Sync inputs if score prop changes externally
+  useEffect(() => {
+    if (!editing) {
+      const p = (score ?? "").split("-");
+      setHomeVal(p[0] ?? "");
+      setAwayVal(p[1] ?? "");
+    }
+  }, [score, editing]);
+
+  async function handleSave() {
+    if (homeVal === "" || awayVal === "") return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/bracket-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challengeId: "va26-u13-ad",
+          round: "group_score",
+          key: String(id),
+          winner: `${homeVal}-${awayVal}`,
+        }),
+      });
+      if (res.ok) {
+        onSave?.(String(id), `${homeVal}-${awayVal}`);
+        setEditing(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className={`rounded-xl border ${colors.border} ${colors.bg} p-3`}>
+      {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <span className={`text-xs font-bold ${colors.text}`}>Group {group} · Round {round}</span>
-        <span className="text-xs text-brand-muted">{time}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-brand-muted">{time}</span>
+          {isAdmin && (
+            <button
+              onClick={() => setEditing(!editing)}
+              className="text-brand-muted hover:text-brand-gold transition-colors text-sm leading-none"
+              title={editing ? "Cancel edit" : "Edit score"}
+            >
+              {editing ? "✕" : "✏️"}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Teams row */}
       <div className="flex items-center gap-2">
         <TeamLogo team={home} size={36} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{home}</p>
-          {TEAM_RANKINGS[home] && (
-            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
-          )}
+          {TEAM_RANKINGS[home] && <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>}
         </div>
-        <div className="flex-shrink-0 px-2 text-center">
-          {score ? (
+        <div className="flex-shrink-0 px-2 text-center min-w-[52px]">
+          {score && !editing ? (
             <span className="text-white font-bold text-base tabular-nums">{score.replace("-", " – ")}</span>
-          ) : (
+          ) : !editing ? (
             <span className="text-brand-muted font-bold text-sm">vs</span>
-          )}
+          ) : null}
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-semibold text-white truncate">{away}</p>
-          {TEAM_RANKINGS[away] && (
-            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
-          )}
+          {TEAM_RANKINGS[away] && <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>}
         </div>
         <TeamLogo team={away} size={36} />
       </div>
+
+      {/* Inline edit row — admin only */}
+      {editing && (
+        <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2">
+          <span className="text-xs text-brand-muted truncate flex-1">{home}</span>
+          <input
+            type="number" min="0" max="20"
+            value={homeVal}
+            onChange={(e) => setHomeVal(e.target.value)}
+            className="w-12 text-center text-base font-bold bg-gray-800 border border-gray-600 rounded-lg px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+          />
+          <span className="text-gray-500 font-bold text-xs">–</span>
+          <input
+            type="number" min="0" max="20"
+            value={awayVal}
+            onChange={(e) => setAwayVal(e.target.value)}
+            className="w-12 text-center text-base font-bold bg-gray-800 border border-gray-600 rounded-lg px-1 py-1 text-white focus:border-brand-green focus:outline-none"
+          />
+          <span className="text-xs text-brand-muted truncate flex-1 text-right">{away}</span>
+          <button
+            onClick={handleSave}
+            disabled={homeVal === "" || awayVal === "" || saving}
+            className="ml-1 px-3 py-1.5 bg-brand-green hover:bg-green-500 disabled:opacity-40 text-black text-xs font-bold rounded-lg transition-colors"
+          >
+            {saving ? "..." : "Save"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// Main Page
 export default function SchedulePage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isAdmin ?? false;
+
   const [activeDay, setActiveDay] = useState<"1" | "2" | "knockout">("1");
   const [activeGroup, setActiveGroup] = useState<string>("ALL");
   const [scores, setScores] = useState<Record<string, string>>({});
@@ -116,17 +199,52 @@ export default function SchedulePage() {
       .catch(() => {});
   }, []);
 
+  function handleScoreSaved(gameId: string, score: string) {
+    setScores((prev) => ({ ...prev, [gameId]: score }));
+  }
+
   const day1Games = GROUP_GAMES.filter((g) => g.day === 1);
   const day2Games = GROUP_GAMES.filter((g) => g.day === 2);
-
   const filteredDay1 = activeGroup === "ALL" ? day1Games : day1Games.filter((g) => g.group === activeGroup);
   const filteredDay2 = activeGroup === "ALL" ? day2Games : day2Games.filter((g) => g.group === activeGroup);
 
-  // Group teams with rankings, sorted best → worst
   const groupsWithRankings = Object.entries(GROUPS).map(([letter, teams]) => ({
     letter,
     teams: [...teams].sort((a, b) => (TEAM_RANKINGS[a] ?? 9999) - (TEAM_RANKINGS[b] ?? 9999)),
   }));
+
+  function renderGames(games: typeof day1Games) {
+    if (activeGroup === "ALL") {
+      return Object.keys(GROUPS).map((g) => {
+        const groupGames = games.filter((game) => game.group === g);
+        if (!groupGames.length) return null;
+        const c = GROUP_COLORS[g];
+        return (
+          <div key={g} className="space-y-2">
+            <p className={`text-xs font-bold uppercase tracking-widest px-1 ${c.text}`}>Group {g}</p>
+            {groupGames.map((game) => (
+              <GameCard
+                key={game.id}
+                {...game}
+                score={scores[String(game.id)]}
+                isAdmin={isAdmin}
+                onSave={handleScoreSaved}
+              />
+            ))}
+          </div>
+        );
+      });
+    }
+    return games.map((game) => (
+      <GameCard
+        key={game.id}
+        {...game}
+        score={scores[String(game.id)]}
+        isAdmin={isAdmin}
+        onSave={handleScoreSaved}
+      />
+    ));
+  }
 
   return (
     <div className="max-w-2xl mx-auto pb-24 space-y-5">
@@ -144,24 +262,22 @@ export default function SchedulePage() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 mt-2 text-xs text-brand-gold hover:text-yellow-300 transition-colors"
         >
-          🌐 Official MLS NEXT Standings →
+          Official MLS NEXT Standings →
         </a>
       </div>
 
       {/* Day Tabs */}
       <div className="flex gap-2 bg-brand-card rounded-xl p-1 border border-brand-border">
         {[
-          { key: "1",        label: "📅 May 1",     sub: "Group Play" },
-          { key: "2",        label: "📅 May 2",     sub: "Group Play" },
-          { key: "knockout", label: "⚡ May 3–4",   sub: "Knockouts" },
+          { key: "1",        label: "May 1",   sub: "Group Play" },
+          { key: "2",        label: "May 2",   sub: "Group Play" },
+          { key: "knockout", label: "May 3–4", sub: "Knockouts"  },
         ].map(({ key, label, sub }) => (
           <button
             key={key}
             onClick={() => setActiveDay(key as typeof activeDay)}
             className={`flex-1 py-2 px-2 rounded-lg text-center transition-all ${
-              activeDay === key
-                ? "bg-brand-green text-brand-dark font-bold"
-                : "text-brand-muted hover:text-white"
+              activeDay === key ? "bg-brand-green text-brand-dark font-bold" : "text-brand-muted hover:text-white"
             }`}
           >
             <div className="text-sm font-semibold">{label}</div>
@@ -170,7 +286,7 @@ export default function SchedulePage() {
         ))}
       </div>
 
-      {/* Group Filter (only for group play days) */}
+      {/* Group Filter */}
       {activeDay !== "knockout" && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -202,65 +318,27 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Day 1 Games */}
+      {/* Day 1 */}
       {activeDay === "1" && (
         <div className="space-y-4">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
             Friday, May 1 · {filteredDay1.length} games
           </p>
-          {activeGroup === "ALL"
-            ? Object.keys(GROUPS).map((g) => {
-                const groupGames = filteredDay1.filter((game) => game.group === g);
-                if (!groupGames.length) return null;
-                const c = GROUP_COLORS[g];
-                return (
-                  <div key={g} className="space-y-2">
-                    <p className={`text-xs font-bold uppercase tracking-widest px-1 ${c.text}`}>
-                      Group {g}
-                    </p>
-                    {groupGames.map((game) => (
-                      <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
-                    ))}
-                  </div>
-                );
-              })
-            : filteredDay1.map((game) => (
-                <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
-              ))
-          }
+          {renderGames(filteredDay1)}
         </div>
       )}
 
-      {/* Day 2 Games */}
+      {/* Day 2 */}
       {activeDay === "2" && (
         <div className="space-y-4">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
             Saturday, May 2 · {filteredDay2.length} games
           </p>
-          {activeGroup === "ALL"
-            ? Object.keys(GROUPS).map((g) => {
-                const groupGames = filteredDay2.filter((game) => game.group === g);
-                if (!groupGames.length) return null;
-                const c = GROUP_COLORS[g];
-                return (
-                  <div key={g} className="space-y-2">
-                    <p className={`text-xs font-bold uppercase tracking-widest px-1 ${c.text}`}>
-                      Group {g}
-                    </p>
-                    {groupGames.map((game) => (
-                      <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
-                    ))}
-                  </div>
-                );
-              })
-            : filteredDay2.map((game) => (
-                <GameCard key={game.id} {...game} score={scores[String(game.id)]} />
-              ))
-          }
+          {renderGames(filteredDay2)}
         </div>
       )}
 
-      {/* Knockout Schedule */}
+      {/* Knockouts */}
       {activeDay === "knockout" && (
         <div className="space-y-4">
           {KNOCKOUT_SCHEDULE.map(({ round, day, slots }) => (
@@ -296,12 +374,12 @@ export default function SchedulePage() {
             href="/brackets/va26-u13-ad"
             className="w-full block text-center bg-brand-green text-brand-dark font-bold py-3 rounded-xl hover:bg-green-400 transition-colors mt-2"
           >
-            🏆 Fill Out Your Bracket →
+            Fill Out Your Bracket
           </Link>
         </div>
       )}
 
-      {/* Group Standings Preview */}
+      {/* Group Rosters */}
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3 px-1">
           <h2 className="font-bold text-white">Group Rosters</h2>
