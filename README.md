@@ -90,10 +90,14 @@ A private sports betting web app for friends and family. Users bet virtual curre
 - **Env vars:** `SPORTSDB_API_KEY`, `SPORTSDB_BASE_URL`
 - **Note:** Free tier uses API key `"3"`. Does not support horse racing.
 
-### Domain Registrar
+### Namecheap (Domain Registrar)
 - **Domain:** `funbetz.life`
-- **Check your registrar:** Likely Namecheap, GoDaddy, or Google Domains — log into whichever account you used when you purchased `funbetz.life`
-- DNS is pointed at Vercel (Vercel manages the SSL certificate automatically)
+- **Registrar:** [namecheap.com](https://www.namecheap.com) — account `kudzooman@gmail.com`
+- **DNS:** Pointed at Vercel. In Namecheap → Domain List → Manage → Advanced DNS, the records look like:
+  - `A` record: `@` → Vercel IP (e.g. `76.76.21.21`)
+  - `CNAME` record: `www` → `cname.vercel-dns.com`
+- Vercel manages the SSL certificate automatically once DNS is verified
+- **To move the domain to a new host:** Update the A and CNAME records in Namecheap to point to the new host, or transfer the domain itself via Namecheap → Domain List → Transfer
 
 ---
 
@@ -275,7 +279,7 @@ Everything you need to move this app to a new account or instance.
 | **Neon** | Either transfer project, or export/import the database (see below) |
 | **Resend** | Create new account, get API key, verify sending domain, update `RESEND_API_KEY` |
 | **TheSportsDB** | No account needed for free tier — API key is just `"3"` |
-| **Domain registrar** | Update DNS A/CNAME records to point to new Vercel deployment |
+| **Namecheap** | Log in at namecheap.com → Domain List → funbetz.life → Advanced DNS → update A record and CNAME to point to new host |
 
 ### Migrating the database
 
