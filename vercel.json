@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/resolve-parlays",
-      "schedule": "0 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/sync-golf",
