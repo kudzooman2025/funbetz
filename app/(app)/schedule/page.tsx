@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { GROUPS, GROUP_GAMES, TEAM_RANKINGS } from "@/lib/bracket-config";
 import { getLogoUrl } from "@/lib/team-logos";
 
@@ -21,17 +20,17 @@ const GROUP_COLORS: Record<string, { bg: string; border: string; text: string }>
 
 // ─── Knockout schedule (fixed times) ─────────────────────────────────────────
 const KNOCKOUT_SCHEDULE = [
-  { round: "Quarterfinals", day: "Sunday, May 3", slots: [
-    { time: "8:00 AM", label: "QF 1 — Group A Winner vs Group H Winner" },
-    { time: "8:00 AM", label: "QF 2 — Group D Winner vs Group E Winner" },
-    { time: "8:00 AM", label: "QF 3 — Group C Winner vs Group F Winner" },
-    { time: "8:00 AM", label: "QF 4 — Group B Winner vs Group G Winner" },
+  { round: "Quarterfinals", day: "Saturday, May 3", slots: [
+    { time: "8:00 AM", label: "QF 1 — #1 Seed vs #8 Seed" },
+    { time: "8:00 AM", label: "QF 2 — #4 Seed vs #5 Seed" },
+    { time: "8:00 AM", label: "QF 3 — #3 Seed vs #6 Seed" },
+    { time: "8:00 AM", label: "QF 4 — #2 Seed vs #7 Seed" },
   ]},
-  { round: "Semifinals", day: "Sunday, May 3", slots: [
-    { time: "1:00 PM", label: "SF 1 — Winner QF1 (A/H) vs Winner QF2 (D/E)" },
-    { time: "1:00 PM", label: "SF 2 — Winner QF3 (C/F) vs Winner QF4 (B/G)" },
+  { round: "Semifinals", day: "Saturday, May 3", slots: [
+    { time: "1:00 PM", label: "SF 1 — Winner QF1 vs Winner QF2" },
+    { time: "1:00 PM", label: "SF 2 — Winner QF3 vs Winner QF4" },
   ]},
-  { round: "Final", day: "Monday, May 4", slots: [
+  { round: "Final", day: "Sunday, May 4", slots: [
     { time: "8:00 AM", label: "Championship Final" },
   ]},
 ];
@@ -63,196 +62,41 @@ function TeamLogo({ team, size = 40 }: { team: string; size?: number }) {
 }
 
 // ─── Game Card ────────────────────────────────────────────────────────────────
-function GameCard({
-  id, home, away, group, time, round, score, isAdmin, onScoreSaved,
-}: {
-  id: number;
-  home: string;
-  away: string;
-  group: string;
-  time: string;
-  round: number;
-  score?: string;
-  isAdmin?: boolean;
-  onScoreSaved?: (gameId: number, score: string) => void;
+function GameCard({ home, away, group, time, round }: {
+  home: string; away: string; group: string; time: string; round: number;
 }) {
   const colors = GROUP_COLORS[group];
-  const parts = score ? score.split("-") : null;
-  const homeGoals = parts?.[0];
-  const awayGoals = parts?.[1];
-  const hasScore = homeGoals !== undefined && awayGoals !== undefined;
-
-  const [editing, setEditing] = useState(false);
-  const [homeInput, setHomeInput] = useState(homeGoals ?? "");
-  const [awayInput, setAwayInput] = useState(awayGoals ?? "");
-  const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const awayRef = useRef<HTMLInputElement>(null);
-
-  // Keep inputs in sync when score changes from parent
-  useEffect(() => {
-    if (!editing) {
-      setHomeInput(homeGoals ?? "");
-      setAwayInput(awayGoals ?? "");
-    }
-  }, [score, editing, homeGoals, awayGoals]);
-
-  async function handleSave() {
-    if (homeInput === "" || awayInput === "") return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/admin/bracket-results", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          challengeId: "va26-u13-ad",
-          results: [{ round: "group_score", key: String(id), winner: `${homeInput}-${awayInput}` }],
-        }),
-      });
-      if (res.ok) {
-        const newScore = `${homeInput}-${awayInput}`;
-        onScoreSaved?.(id, newScore);
-        setEditing(false);
-        setSavedFlash(true);
-        setTimeout(() => setSavedFlash(false), 2500);
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleCancel() {
-    setHomeInput(homeGoals ?? "");
-    setAwayInput(awayGoals ?? "");
-    setEditing(false);
-  }
-
   return (
     <div className={`rounded-xl border ${colors.border} ${colors.bg} p-3`}>
       <div className="flex items-center justify-between mb-2">
         <span className={`text-xs font-bold ${colors.text}`}>Group {group} · Round {round}</span>
-        <div className="flex items-center gap-2">
-          {savedFlash && (
-            <span className="text-xs text-brand-green font-semibold">✓ Saved</span>
-          )}
-          <span className="text-xs text-brand-muted">{time}</span>
-          {isAdmin && !editing && (
-            <button
-              onClick={() => setEditing(true)}
-              title="Enter score"
-              className="text-brand-muted hover:text-white text-sm leading-none transition-colors"
-            >
-              ✏️
-            </button>
-          )}
-        </div>
+        <span className="text-xs text-brand-muted">{time}</span>
       </div>
-
-      {editing ? (
-        /* ── Edit mode ── */
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <TeamLogo team={home} size={32} />
-            <span className="flex-1 text-sm font-semibold text-white truncate">{home}</span>
-            <input
-              type="number"
-              min={0}
-              value={homeInput}
-              onChange={(e) => setHomeInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") { e.preventDefault(); awayRef.current?.focus(); }
-                if (e.key === "Enter") { e.preventDefault(); awayRef.current?.focus(); }
-                if (e.key === "Escape") handleCancel();
-              }}
-              className="w-14 text-center rounded-lg bg-brand-surface border border-brand-border text-white text-lg font-bold py-1 focus:outline-none focus:border-brand-green"
-              placeholder="0"
-              autoFocus
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <TeamLogo team={away} size={32} />
-            <span className="flex-1 text-sm font-semibold text-white truncate">{away}</span>
-            <input
-              ref={awayRef}
-              type="number"
-              min={0}
-              value={awayInput}
-              onChange={(e) => setAwayInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); handleSave(); }
-                if (e.key === "Escape") handleCancel();
-              }}
-              className="w-14 text-center rounded-lg bg-brand-surface border border-brand-border text-white text-lg font-bold py-1 focus:outline-none focus:border-brand-green"
-              placeholder="0"
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={handleSave}
-              disabled={saving || homeInput === "" || awayInput === ""}
-              className="flex-1 py-1.5 rounded-lg bg-brand-green text-brand-dark text-xs font-bold disabled:opacity-50 hover:bg-green-400 transition-colors"
-            >
-              {saving ? "Saving…" : "Save Score"}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-1.5 rounded-lg border border-brand-border text-brand-muted text-xs hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* ── Display mode ── */
-        <div className="flex items-center gap-2">
-          <TeamLogo team={home} size={36} />
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold truncate ${hasScore && Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{home}</p>
-            {TEAM_RANKINGS[home] && (
-              <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
-            )}
-          </div>
-          {hasScore ? (
-            <div className="flex items-center gap-1 px-2">
-              <span className={`text-lg font-bold ${Number(homeGoals) > Number(awayGoals) ? "text-brand-green" : "text-white"}`}>{homeGoals}</span>
-              <span className="text-brand-muted font-bold text-sm">–</span>
-              <span className={`text-lg font-bold ${Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{awayGoals}</span>
-            </div>
-          ) : (
-            <span className="text-brand-muted font-bold text-sm px-1">vs</span>
+      <div className="flex items-center gap-2">
+        <TeamLogo team={home} size={36} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white truncate">{home}</p>
+          {TEAM_RANKINGS[home] && (
+            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[home]}</p>
           )}
-          <div className="flex-1 min-w-0 text-right">
-            <p className={`text-sm font-semibold truncate ${hasScore && Number(awayGoals) > Number(homeGoals) ? "text-brand-green" : "text-white"}`}>{away}</p>
-            {TEAM_RANKINGS[away] && (
-              <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
-            )}
-          </div>
-          <TeamLogo team={away} size={36} />
         </div>
-      )}
+        <span className="text-brand-muted font-bold text-sm px-1">vs</span>
+        <div className="flex-1 min-w-0 text-right">
+          <p className="text-sm font-semibold text-white truncate">{away}</p>
+          {TEAM_RANKINGS[away] && (
+            <p className="text-xs text-brand-muted">#{TEAM_RANKINGS[away]}</p>
+          )}
+        </div>
+        <TeamLogo team={away} size={36} />
+      </div>
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
-  const { data: session } = useSession();
-  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin ?? false;
-
   const [activeDay, setActiveDay] = useState<"1" | "2" | "knockout">("1");
   const [activeGroup, setActiveGroup] = useState<string>("ALL");
-  const [scores, setScores] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    fetch("/api/scores?challengeId=va26-u13-ad")
-      .then((r) => r.json())
-      .then((data) => setScores(data))
-      .catch(() => {});
-  }, []);
-
-  function handleScoreSaved(gameId: number, score: string) {
-    setScores((prev) => ({ ...prev, [String(gameId)]: score }));
-  }
 
   const day1Games = GROUP_GAMES.filter((g) => g.day === 1);
   const day2Games = GROUP_GAMES.filter((g) => g.day === 2);
@@ -310,10 +154,10 @@ export default function SchedulePage() {
 
       {/* Group Filter (only for group play days) */}
       {activeDay !== "knockout" && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveGroup("ALL")}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
               activeGroup === "ALL"
                 ? "bg-white text-brand-dark border-white"
                 : "border-brand-border text-brand-muted hover:text-white"
@@ -327,7 +171,7 @@ export default function SchedulePage() {
               <button
                 key={g}
                 onClick={() => setActiveGroup(g)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                   activeGroup === g
                     ? `${c.bg} ${c.border} ${c.text}`
                     : "border-brand-border text-brand-muted hover:text-white"
@@ -342,37 +186,59 @@ export default function SchedulePage() {
 
       {/* Day 1 Games */}
       {activeDay === "1" && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
             Friday, May 1 · {filteredDay1.length} games
           </p>
-          {filteredDay1.map((game) => (
-            <GameCard
-              key={game.id}
-              {...game}
-              score={scores[String(game.id)]}
-              isAdmin={isAdmin}
-              onScoreSaved={handleScoreSaved}
-            />
-          ))}
+          {activeGroup === "ALL"
+            ? Object.keys(GROUPS).map((g) => {
+                const groupGames = filteredDay1.filter((game) => game.group === g);
+                if (!groupGames.length) return null;
+                const c = GROUP_COLORS[g];
+                return (
+                  <div key={g} className="space-y-2">
+                    <p className={`text-xs font-bold uppercase tracking-widest px-1 ${c.text}`}>
+                      Group {g}
+                    </p>
+                    {groupGames.map((game) => (
+                      <GameCard key={game.id} {...game} />
+                    ))}
+                  </div>
+                );
+              })
+            : filteredDay1.map((game) => (
+                <GameCard key={game.id} {...game} />
+              ))
+          }
         </div>
       )}
 
       {/* Day 2 Games */}
       {activeDay === "2" && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
             Saturday, May 2 · {filteredDay2.length} games
           </p>
-          {filteredDay2.map((game) => (
-            <GameCard
-              key={game.id}
-              {...game}
-              score={scores[String(game.id)]}
-              isAdmin={isAdmin}
-              onScoreSaved={handleScoreSaved}
-            />
-          ))}
+          {activeGroup === "ALL"
+            ? Object.keys(GROUPS).map((g) => {
+                const groupGames = filteredDay2.filter((game) => game.group === g);
+                if (!groupGames.length) return null;
+                const c = GROUP_COLORS[g];
+                return (
+                  <div key={g} className="space-y-2">
+                    <p className={`text-xs font-bold uppercase tracking-widest px-1 ${c.text}`}>
+                      Group {g}
+                    </p>
+                    {groupGames.map((game) => (
+                      <GameCard key={game.id} {...game} />
+                    ))}
+                  </div>
+                );
+              })
+            : filteredDay2.map((game) => (
+                <GameCard key={game.id} {...game} />
+              ))
+          }
         </div>
       )}
 
@@ -397,24 +263,13 @@ export default function SchedulePage() {
           ))}
 
           <div className="bg-brand-surface border border-brand-border rounded-xl p-4 mt-4">
-            <p className="text-xs text-brand-muted mb-3 font-semibold uppercase tracking-widest">Knockout Format</p>
+            <p className="text-xs text-brand-muted mb-3 font-semibold uppercase tracking-widest">QF Seeding Format</p>
             <p className="text-sm text-white leading-relaxed">
-              Group winners are paired by group for the quarterfinals. Semifinal and Final matchups follow the bracket below.
+              The 8 group winners are ranked #1–#8 by points per match, then goal difference, then goals scored.
             </p>
-            <div className="mt-3 space-y-2 text-xs">
-              {[
-                { label: "QF 1", match: "Group A Winner vs Group H Winner" },
-                { label: "QF 2", match: "Group D Winner vs Group E Winner" },
-                { label: "QF 3", match: "Group C Winner vs Group F Winner" },
-                { label: "QF 4", match: "Group B Winner vs Group G Winner" },
-                { label: "SF 1", match: "Winner QF1 (A/H) vs Winner QF2 (D/E)" },
-                { label: "SF 2", match: "Winner QF3 (C/F) vs Winner QF4 (B/G)" },
-                { label: "Final", match: "Winner SF1 vs Winner SF2" },
-              ].map(({ label, match }) => (
-                <div key={label} className="flex items-center gap-2 bg-brand-card border border-brand-border rounded-lg px-3 py-2">
-                  <span className="text-brand-green font-bold w-10 flex-shrink-0">{label}</span>
-                  <span className="text-brand-muted">{match}</span>
-                </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              {["#1 vs #8","#4 vs #5","#3 vs #6","#2 vs #7"].map((m) => (
+                <div key={m} className="bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-center text-brand-muted">{m}</div>
               ))}
             </div>
           </div>
@@ -448,7 +303,7 @@ export default function SchedulePage() {
                         <p className="text-sm text-white font-medium truncate">{team}</p>
                       </div>
                       {TEAM_RANKINGS[team] && (
-                        <span className="text-xs text-brand-muted font-bold">#{TEAM_RANKINGS[team]}</span>
+                        <span className="text-xs text-brand-muted flex-shrink-0">#{TEAM_RANKINGS[team]}</span>
                       )}
                     </div>
                   ))}
