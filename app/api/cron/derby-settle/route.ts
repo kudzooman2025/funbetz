@@ -15,10 +15,9 @@ import {
 } from "@/lib/derby-config";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get("secret");
+  const authHeader = req.headers.get("authorization");
 
-  if (secret !== process.env.CRON_SECRET) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
