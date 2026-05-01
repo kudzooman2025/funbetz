@@ -613,6 +613,7 @@ function GroupScoreSection({
 }) {
   const [open, setOpen] = useState(false);
   const [activeDay, setActiveDay] = useState<1 | 2>(1);
+  const [scoreFilter, setScoreFilter] = useState<"all" | "scored" | "unscored">("all");
 
   const dayGames = games.filter((g) => g.day === activeDay);
   // Group by group letter
@@ -650,8 +651,8 @@ function GroupScoreSection({
 
       {open && (
         <>
-          {/* Day tabs */}
-          <div className="flex gap-2">
+          {/* Day tabs + score filter */}
+          <div className="flex flex-wrap items-center gap-2">
             {([1, 2] as const).map((d) => (
               <button
                 key={d}
@@ -662,9 +663,28 @@ function GroupScoreSection({
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                 }`}
               >
-                📅 May {d === 1 ? "1" : "2"}
+                May {d === 1 ? "1" : "2"}
               </button>
             ))}
+            <div className="ml-auto flex gap-1.5">
+              {(["all", "scored", "unscored"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setScoreFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    scoreFilter === f
+                      ? f === "scored"
+                        ? "bg-brand-green/20 text-brand-green border border-brand-green/40"
+                        : f === "unscored"
+                        ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                        : "bg-gray-600 text-white border border-gray-500"
+                      : "bg-gray-800 text-gray-400 border border-gray-700 hover:text-white"
+                  }`}
+                >
+                  {f === "all" ? "All" : f === "scored" ? "Scored" : "Not Scored"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Games by group */}
@@ -684,7 +704,12 @@ function GroupScoreSection({
                   )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {groupGames.map((game) => {
+                  {groupGames.filter((game) => {
+                    const s = storedWinner("group_score", String(game.id));
+                    if (scoreFilter === "scored") return !!s;
+                    if (scoreFilter === "unscored") return !s;
+                    return true;
+                  }).map((game) => {
                     const round = "group_score";
                     const key = String(game.id);
                     const stateKey = `${round}_${key}`;
