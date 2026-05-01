@@ -14,6 +14,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { GROUPS, GROUP_GAMES, QF_SLOTS, SF_SEEDS, GROUP_KEYS, type BracketPicks } from "@/lib/bracket-config";
+import { DERBY_HORSES } from "@/lib/derby-config";
 
 const CHALLENGE_ID = "va26-u13-ad";
 
@@ -77,6 +78,14 @@ export default function AdminPage() {
   const [bracketsLoading, setBracketsLoading] = useState(false);
   const [showBrackets, setShowBrackets] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+
+  // Derby
+  const [showDerby, setShowDerby] = useState(false);
+  const [derbyFirst, setDerbyFirst] = useState("");
+  const [derbySecond, setDerbySecond] = useState("");
+  const [derbyThird, setDerbyThird] = useState("");
+  const [derbySettling, setDerbySettling] = useState(false);
+  const [derbyResult, setDerbyResult] = useState<{ settled: number; totalPaidOut: number; first: string; second: string; third: string } | null>(null);
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -295,6 +304,39 @@ export default function AdminPage() {
       addLog(`Recalculate failed: ${String(err)}`);
     }
     setRecalculating(false);
+  }
+
+  // ── Derby settle ──────────────────────────────────────────────────────────
+  async function handleDerbySettle() {
+    if (!derbyFirst || !derbySecond || !derbyThird) {
+      addLog("Derby: select all three finishers first");
+      return;
+    }
+    if (derbyFirst === derbySecond || derbyFirst === derbyThird || derbySecond === derbyThird) {
+      addLog("Derby: 1st, 2nd, and 3rd must all be different horses");
+      return;
+    }
+    if (!confirm(`Settle Kentucky Derby with:\n1st: ${derbyFirst}\n2nd: ${derbySecond}\n3rd: ${derbyThird}\n\nThis will credit all winners. Continue?`)) return;
+
+    setDerbySettling(true);
+    addLog(`Derby: submitting results — 1st: ${derbyFirst}, 2nd: ${derbySecond}, 3rd: ${derbyThird}`);
+    try {
+      const res = await fetch("/api/admin/derby", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first: derbyFirst, second: derbySecond, third: derbyThird }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDerbyResult(data);
+        addLog(`Derby settled! ${data.settled} picks settled, $${data.totalPaidOut.toLocaleString()} paid out.`);
+      } else {
+        addLog(`Derby error: ${data.error}`);
+      }
+    } catch (err) {
+      addLog(`Derby failed: ${String(err)}`);
+    }
+    setDerbySettling(false);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -616,6 +658,83 @@ export default function AdminPage() {
               </div>
             )}
           </>
+        )}
+      </section>
+
+      {/* ── Kentucky Derby Section ─────────────────────────────────────────── */}
+      <section className="bg-brand-card border border-brand-gold/30 rounded-xl p-6">
+        <button
+          onClick={() => setShowDerby(!showDerby)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <div>
+            <h2 className="text-lg font-bold text-brand-gold">🏇 Kentucky Derby 2026 — Enter Results</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Manual fallback: select 1st, 2nd, 3rd place finishers and settle all picks</p>
+          </div>
+          <span className="text-gray-400 text-sm">{showDerby ? "▲" : "▼"}</span>
+        </button>
+
+        {showDerby && (
+          <div className="mt-5 space-y-5">
+            {derbyResult ? (
+              <div className="bg-brand-green/10 border border-brand-green/30 rounded-lg p-4 text-center">
+                <p className="text-brand-green font-bold text-lg">✅ Derby Settled!</p>
+                <p className="text-gray-300 text-sm mt-1">
+                  1st: <span className="text-brand-gold font-semibold">{derbyResult.first}</span>{" · "}
+                  2nd: <span className="text-brand-gold font-semibold">{derbyResult.second}</span>{" · "}
+                  3rd: <span className="text-brand-gold font-semibold">{derbyResult.third}</span>
+                </p>
+                <p className="text-gray-400 text-sm mt-1">
+                  {derbyResult.settled} picks settled · ${derbyResult.totalPaidOut.toLocaleString()} paid out
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {([
+                    { label: "🥇 1st Place", value: derbyFirst, setter: setDerbyFirst },
+                    { label: "🥈 2nd Place", value: derbySecond, setter: setDerbySecond },
+                    { label: "🥉 3rd Place", value: derbyThird, setter: setDerbyThird },
+                  ] as { label: string; value: string; setter: (v: string) => void }[]).map(({ label, value, setter }) => (
+                    <div key={label}>
+                      <label className="block text-xs font-semibold text-gray-400 mb-1">{label}</label>
+                      <select
+                        value={value}
+                        onChange={(e) => setter(e.target.value)}
+                        className="w-full bg-brand-surface border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-gold"
+                      >
+                        <option value="">— Select horse —</option>
+                        {DERBY_HORSES.map((h) => (
+                          <option key={h.name} value={h.name}>
+                            #{h.post} {h.name} ({h.odds})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                {derbyFirst && derbySecond && derbyThird && (
+                  <div className="bg-brand-surface rounded-lg p-3 text-sm text-gray-300 border border-brand-border">
+                    <span className="text-gray-400">Ready to settle: </span>
+                    <span className="text-brand-gold font-semibold">{derbyFirst}</span>
+                    <span className="text-gray-500"> → </span>
+                    <span className="text-brand-gold font-semibold">{derbySecond}</span>
+                    <span className="text-gray-500"> → </span>
+                    <span className="text-brand-gold font-semibold">{derbyThird}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleDerbySettle}
+                  disabled={derbySettling || !derbyFirst || !derbySecond || !derbyThird}
+                  className="w-full py-3 rounded-lg font-bold text-sm bg-brand-gold text-black hover:bg-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {derbySettling ? "Settling picks…" : "💰 Enter Results & Settle All Picks"}
+                </button>
+              </>
+            )}
+          </div>
         )}
       </section>
 
