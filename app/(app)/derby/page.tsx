@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import {
   DERBY_HORSES, DERBY_LOCK_TIME, DERBY_YEAR,
   calcWinPayout, calcExactaPayout, calcTrifectaPayout,
-  type DerbyHorse,
 } from "@/lib/derby-config";
 
 const POST_TIME = "6:57 PM ET · Saturday May 2, 2026 · Churchill Downs";
@@ -170,7 +169,13 @@ export default function DerbyPage() {
 
   // ── Results view ────────────────────────────────────────────────────────────
   if (result?.first) {
-    const p = existingPick as Record<string, unknown> | null;
+    // Type-safe helper to read pick fields
+  interface PickData {
+    winHorse?: string; winResult?: string; winPayout?: number;
+    exacta1?: string; exacta2?: string; exactaResult?: string; exactaPayout?: number;
+    trifecta1?: string; trifecta2?: string; trifecta3?: string; trifectaResult?: string; trifectaPayout?: number;
+  }
+  const p = existingPick as PickData | null;
     return (
       <div className="max-w-2xl mx-auto pb-24 space-y-5">
         <div className="text-center pt-4">
