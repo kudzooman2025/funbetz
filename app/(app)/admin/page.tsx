@@ -1019,4 +1019,45 @@ function KnockoutSection({
                 )}
               </div>
 
-              {/
+              {/* Select */}
+              <select
+                value={selected}
+                onChange={(e) =>
+                  setPending((p) => ({ ...p, [stateKey]: e.target.value }))
+                }
+                className="bg-gray-700 text-white text-sm rounded-lg px-3 py-2 border border-gray-600 focus:border-brand-green focus:outline-none min-w-[200px]"
+              >
+                <option value="">— select winner —</option>
+                {teams.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+
+              {/* Save button */}
+              <button
+                onClick={() => onSave(round, key)}
+                disabled={!selected || isSaving}
+                className="px-4 py-2 bg-brand-green hover:bg-green-500 disabled:opacity-40 text-black text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+              >
+                {isSaving ? "Saving…" : "Save"}
+              </button>
+
+              {/* Clear */}
+              {stored && (
+                <button
+                  onClick={() => onClear(round, key)}
+                  className="px-3 py-2 text-gray-400 hover:text-red-400 text-sm transition-colors"
+                  title="Clear this result"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
