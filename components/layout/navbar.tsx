@@ -46,6 +46,9 @@ export function Navbar() {
           <Link href="/schedule" className="text-gray-300 hover:text-brand-green transition-colors">
             Schedule
           </Link>
+          <Link href="/derby" className="text-brand-gold hover:text-yellow-300 transition-colors font-semibold text-xs border border-brand-gold/40 px-2.5 py-1 rounded-full">
+            🏇 Derby
+          </Link>
           <a
             href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
             target="_blank"
@@ -127,6 +130,9 @@ export function Navbar() {
         </Link>
         <Link href="/schedule" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           📅 Schedule
+        </Link>
+        <Link href="/derby" className="flex-shrink-0 px-4 py-2.5 text-xs text-brand-gold hover:text-yellow-300 whitespace-nowrap font-bold">
+          🏇 Derby
         </Link>
         <Link href="/wallet" className="flex-shrink-0 px-4 py-2.5 text-xs text-gray-300 hover:text-brand-green whitespace-nowrap font-medium">
           💰 Wallet

@@ -66,6 +66,7 @@ model User {
   tournamentMemberships TournamentMember[]
   bracketEntries        BracketEntry[]
   passwordResetTokens   PasswordResetToken[]
+  derbyPicks            DerbyPick[]
 
   @@map("users")
 }
@@ -244,6 +245,55 @@ model BracketEntry {
   @@unique([userId, challengeId])
   @@index([challengeId, score(sort: Desc)])
   @@map("bracket_entries")
+}
+
+model DerbyPick {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  year            Int      @default(2026)
+
+  // Win bet
+  winHorse        String?  @map("win_horse")
+  winWager        Int?     @map("win_wager")
+  winPayout       Int?     @map("win_payout")       // null until settled
+  winResult       String?  @map("win_result")       // "won" | "lost"
+
+  // Exacta bet (1st + 2nd in order)
+  exacta1         String?  @map("exacta_1")
+  exacta2         String?  @map("exacta_2")
+  exactaWager     Int?     @map("exacta_wager")
+  exactaPayout    Int?     @map("exacta_payout")
+  exactaResult    String?  @map("exacta_result")
+
+  // Trifecta bet (1st + 2nd + 3rd in order)
+  trifecta1       String?  @map("trifecta_1")
+  trifecta2       String?  @map("trifecta_2")
+  trifecta3       String?  @map("trifecta_3")
+  trifectaWager   Int?     @map("trifecta_wager")
+  trifectaPayout  Int?     @map("trifecta_payout")
+  trifectaResult  String?  @map("trifecta_result")
+
+  settled         Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
+  @@map("derby_picks")
+}
+
+model DerbyResult {
+  id         String    @id @default(cuid())
+  year       Int       @unique @default(2026)
+  first      String?
+  second     String?
+  third      String?
+  settled    Boolean   @default(false)
+  settledAt  DateTime? @map("settled_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("derby_results")
 }
 
 model ParlayResult {
