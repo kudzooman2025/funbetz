@@ -82,7 +82,7 @@ export default function Day2RecapPage() {
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Clean sheet group winners", value: "3", note: "FC DELCO, Charlotte, Real Futbol" },
+            { label: "Clean sheet group winner", value: "1", note: "Charlotte Independence · 0 conceded" },
             { label: "Perfect records (9 pts)", value: "4", note: "SYC, Alexandria, Baltimore, DELCO" },
             { label: "Group E & F tiebreakers", value: "2", note: "Resolved by head-to-head / GD" },
             { label: "Total goals, Day 2", value: "🔥", note: "Multiple multi-goal finals" },
