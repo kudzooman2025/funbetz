@@ -7,7 +7,7 @@ export const TEAM_LOGOS: Record<string, string> = {
   "Bethesda SC":                    "/logos/bethesda-sc.jpg",
   "Carolina Core FC":               "/logos/carolina-core-fc.jpg",
   "Carolina Velocity FC":           "/logos/carolina-velocity-fc.jpg",
-  "Shore FC":   "/logos/cedar-stars-monmouth.jpg",
+  "Shore FC":                       "/logos/Shore FC.jpg",
   "Charlotte Independence SC":      "/logos/charlotte-independence.jpg",
   "Coppermine SC":                  "/logos/coppermine-sc.jpg",
   "FC DELCO":                       "/logos/fc-delco.jpg",
@@ -36,5 +36,4 @@ export const TEAM_LOGOS: Record<string, string> = {
 };
 
 export function getLogoUrl(teamName: string): string | null {
-  return TEAM_LOGOS[teamName] ?? null;
-}
+  return TEAM_LOGOS[teamName] ?? 
