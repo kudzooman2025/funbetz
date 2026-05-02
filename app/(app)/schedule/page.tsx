@@ -218,6 +218,160 @@ function GameCard({
   );
 }
 
+// ── Day 1 Recap Article ─────────────────────────────────────────────────────
+function Day1RecapArticle() {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="bg-brand-card border border-brand-border rounded-xl overflow-hidden mt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-brand-green text-sm">📰</span>
+          <span className="text-sm font-bold text-white">Day 1 Roundup — Leaders Emerge, Group H Goes Down to the Wire</span>
+        </div>
+        <span className="text-brand-muted text-xs ml-2 flex-shrink-0">{expanded ? "▲ Collapse" : "▼ Read"}</span>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-5 space-y-4 border-t border-brand-border text-sm text-brand-muted leading-relaxed">
+          <p className="text-xs text-brand-muted pt-3 uppercase tracking-widest font-semibold">May 1, 2026 · Virginia Regional · U13 AD</p>
+
+          <p className="text-white/90">
+            Eight groups, sixteen first-round fixtures, and some early statements have been made at the 2026 MLS NEXT Cup Qualifiers
+            in Virginia. After a full Day 1 slate, a handful of clubs have separated themselves from the pack — and a fascinating
+            tiebreaker battle is already brewing in Group H.
+          </p>
+
+          <div>
+            <p className="font-bold text-white mb-1">The Dominant Ones</p>
+            <p>
+              <span className="text-white font-semibold">FC DELCO</span> (Group C) put on the most commanding display of the day,
+              outscoring opponents 8–0 across two games for the best goal differential in the tournament at +8. They will enter Day 2
+              with an iron grip on their group and loom as a genuine Championship contender.
+            </p>
+            <p className="mt-2">
+              Not far behind, <span className="text-white font-semibold">Fox Soccer Academy Carolinas</span> (Group E) posted an
+              8–1 goal tally for a +7 differential, while <span className="text-white font-semibold">Real Futbol Academy</span> (Group G)
+              remain perfect and clinical with a 6–0 scoreline.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-bold text-white mb-1">The Group H Standoff</p>
+            <p>
+              The most compelling subplot heading into Day 2 is the battle atop Group H.
+              Both <span className="text-white font-semibold">Players Development Academy</span> and{" "}
+              <span className="text-white font-semibold">Charlotte Independence Soccer Club</span> have won both of their games,
+              sitting level on 6 points with identical +5 goal differentials. PDA edges Charlotte on goals scored (6 vs. 5) —
+              but with the final group game still to play, nothing is settled.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-bold text-white mb-1">Clean Sheet Kings</p>
+            <p>
+              Several group leaders have yet to concede: FC DELCO, Real Futbol Academy, and{" "}
+              <span className="text-white font-semibold">Alexandria SA</span> (Group B, 4–0) have all kept clean sheets through
+              two games. Alexandria have been particularly clinical, shutting out both opponents while winning comfortably.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-bold text-white mb-1">QF Preview — If Current Leaders Hold</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {[
+                { label: "QF 1", home: "Springfield SYC", away: "PDA / Charlotte Ind. SC", note: "Group A vs H", hot: false },
+                { label: "QF 2", home: "Baltimore Armour", away: "Fox Soccer Academy Car.", note: "Group D vs E", hot: true },
+                { label: "QF 3", home: "FC DELCO", away: "Trenton City SC / Queen City Mutiny", note: "Group C vs F", hot: true },
+                { label: "QF 4", home: "Alexandria SA", away: "Real Futbol Academy", note: "Group B vs G · Both unbeaten & clean sheets", hot: true },
+              ].map(({ label, home, away, note, hot }) => (
+                <div key={label} className={`rounded-lg border p-3 space-y-1 ${hot ? "border-brand-green/30 bg-brand-green/5" : "border-brand-border bg-brand-surface"}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-brand-green uppercase">{label}</span>
+                    {hot && <span className="text-xs text-yellow-400">🔥 Watch this one</span>}
+                  </div>
+                  <p className="text-white text-xs font-semibold">{home}</p>
+                  <p className="text-brand-muted text-xs">vs {away}</p>
+                  <p className="text-brand-muted text-xs italic">{note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs text-brand-muted italic pt-1">
+            Projections based on Day 1 group leaders. All matchups subject to Day 2 results.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Projected QF Matchups (knockout tab) ────────────────────────────────────
+function ProjectedQFMatchups() {
+  const matchups = [
+    {
+      qf: "QF 1", pairing: "Group A vs H",
+      home: { group: "A", team: "Springfield SYC", pts: 6, gd: 2 },
+      away: { group: "H", team: "PDA / Charlotte Ind. SC*", pts: 6, gd: 5 },
+      note: "* Group H tied — final game decides",
+    },
+    {
+      qf: "QF 2", pairing: "Group D vs E",
+      home: { group: "D", team: "Baltimore Armour", pts: 6, gd: 3 },
+      away: { group: "E", team: "Fox Soccer Academy Car.", pts: 6, gd: 7 },
+      note: "Both sides won 2/2 and scored freely",
+    },
+    {
+      qf: "QF 3", pairing: "Group C vs F",
+      home: { group: "C", team: "FC DELCO", pts: 6, gd: 8 },
+      away: { group: "F", team: "Trenton City SC / Queen City*", pts: 3, gd: 2 },
+      note: "* Group F undecided — 1 game remaining each",
+    },
+    {
+      qf: "QF 4", pairing: "Group B vs G",
+      home: { group: "B", team: "Alexandria SA", pts: 6, gd: 4 },
+      away: { group: "G", team: "Real Futbol Academy", pts: 6, gd: 6 },
+      note: "Both teams unbeaten with clean sheets — 0 goals conceded combined",
+    },
+  ];
+
+  return (
+    <div className="space-y-3 mt-2">
+      <div className="flex items-center gap-2 px-1">
+        <p className="text-xs text-brand-muted font-semibold uppercase tracking-widest">Projected QF Matchups</p>
+        <span className="text-xs text-brand-muted">· based on Day 1 leaders</span>
+      </div>
+      {matchups.map(({ qf, pairing, home, away, note }) => (
+        <div key={qf} className="bg-brand-card border border-brand-border rounded-xl p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-brand-green uppercase tracking-wide">{qf} · {pairing}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">{home.team}</p>
+              <p className="text-xs text-brand-muted">Group {home.group} · {home.pts}pts · GD {home.gd > 0 ? "+" : ""}{home.gd}</p>
+            </div>
+            <div className="bg-brand-surface border border-brand-border rounded-lg px-3 py-1.5 text-center flex-shrink-0">
+              <p className="text-brand-muted font-bold text-xs">vs</p>
+            </div>
+            <div className="flex-1 min-w-0 text-right">
+              <p className="text-white font-semibold text-sm truncate">{away.team}</p>
+              <p className="text-xs text-brand-muted">Group {away.group} · {away.pts}pts · GD {away.gd > 0 ? "+" : ""}{away.gd}</p>
+            </div>
+          </div>
+          <p className="text-xs text-brand-muted italic border-t border-brand-border pt-2">{note}</p>
+        </div>
+      ))}
+      <p className="text-xs text-brand-muted px-1 pb-1 italic">
+        Projections based on Day 1 standings. Updated after Day 2 results are entered.
+      </p>
+    </div>
+  );
+}
+
 // Main Page
 export default function SchedulePage() {
   const { data: session } = useSession();
@@ -364,6 +518,7 @@ export default function SchedulePage() {
             Friday, May 1 · {filteredDay1.length} games
           </p>
           {renderGames(filteredDay1)}
+          <Day1RecapArticle />
         </div>
       )}
 
@@ -397,17 +552,7 @@ export default function SchedulePage() {
             </div>
           ))}
 
-          <div className="bg-brand-surface border border-brand-border rounded-xl p-4 mt-4">
-            <p className="text-xs text-brand-muted mb-3 font-semibold uppercase tracking-widest">QF Seeding Format</p>
-            <p className="text-sm text-white leading-relaxed">
-              The 8 group winners are ranked #1–#8 by points per match, then goal difference, then goals scored.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-              {["#1 vs #8","#4 vs #5","#3 vs #6","#2 vs #7"].map((m) => (
-                <div key={m} className="bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-center text-brand-muted">{m}</div>
-              ))}
-            </div>
-          </div>
+          <ProjectedQFMatchups />
 
           <Link
             href="/brackets/va26-u13-ad"
