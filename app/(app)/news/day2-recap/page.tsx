@@ -39,7 +39,7 @@ export default function Day2RecapPage() {
           <p className="text-white/80 leading-relaxed">
             The marquee fixture delivered. <span className="text-white font-semibold">FC DELCO</span> and{" "}
             <span className="text-white font-semibold">The Football Academy</span> entered their Day 2 showdown
-            as the top two clubs in Group C — both unbeaten, both with clean sheets. It was tight,
+            as the top two clubs in Group C — both unbeaten and in dominant form. It was tight,
             physical, and decided by a <span className="text-brand-yellow font-semibold">dramatic late goal</span> from
             FC DELCO to edge the Academy 2–1.
           </p>
@@ -55,9 +55,7 @@ export default function Day2RecapPage() {
         <div className="bg-brand-yellow/10 border border-brand-yellow/30 rounded-xl p-4">
           <p className="text-brand-yellow font-bold text-sm uppercase tracking-wide mb-1">Clutch Factor</p>
           <p className="text-white/90 text-sm leading-relaxed">
-            FC DELCO finishes group play as the last undefeated and unscored-upon side — 10 goals for,
-            1 against after the dramatic Day 2 win. A team that wins ugly when it has to is a dangerous
-            quarterfinal opponent.
+            FC DELCO finishes group play undefeated — 10 goals for, 1 against across three games. They were clinical when dominant and clutch when it mattered most. A team that wins ugly when it has to is a dangerous quarterfinal opponent.
           </p>
         </div>
 
