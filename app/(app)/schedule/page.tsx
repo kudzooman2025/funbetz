@@ -535,6 +535,16 @@ export default function SchedulePage() {
           <p className="text-xs text-brand-muted uppercase tracking-widest font-semibold px-1">
             Saturday, May 2 · {filteredDay2.length} games
           </p>
+          <a
+            href="/news/day2"
+            className="flex items-center justify-between bg-brand-card border border-blue-500/30 rounded-xl px-4 py-3 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-blue-400 text-sm">📋</span>
+              <span className="text-sm font-bold text-white">Day 2 Preview — Form Over Rankings</span>
+            </div>
+            <span className="text-blue-400 text-xs font-semibold flex-shrink-0 ml-2">Read →</span>
+          </a>
           {renderGames(filteredDay2)}
         </div>
       )}

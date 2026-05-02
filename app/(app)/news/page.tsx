@@ -149,12 +149,18 @@ export default function NewsPage() {
           </p>
         </div>
 
-        <div className="border-t border-brand-border pt-4">
+        <div className="border-t border-brand-border pt-4 flex gap-3">
+          <Link
+            href="/news/day2"
+            className="flex-1 block text-center border border-brand-green text-brand-green font-bold py-3 rounded-xl hover:bg-brand-green/10 transition-colors text-sm"
+          >
+            Day 2 Preview →
+          </Link>
           <Link
             href="/brackets/va26-u13-ad"
-            className="w-full block text-center bg-brand-green text-brand-dark font-bold py-3 rounded-xl hover:bg-green-400 transition-colors"
+            className="flex-1 block text-center bg-brand-green text-brand-dark font-bold py-3 rounded-xl hover:bg-green-400 transition-colors text-sm"
           >
-            Fill Out Your Bracket
+            Your Bracket
           </Link>
         </div>
       </article>
