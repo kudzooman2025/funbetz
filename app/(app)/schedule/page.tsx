@@ -72,22 +72,36 @@ function GameCard({
   const colors = GROUP_COLORS[group];
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const parts = (score ?? "").split("-");
-  const [homeVal, setHomeVal] = useState(parts[0] ?? "");
-  const [awayVal, setAwayVal] = useState(parts[1] ?? "");
+  const scoreStr = score ?? "";
+  const [gcRegPart, gcPkPart] = scoreStr.includes(" PK") ? scoreStr.split(" PK") : [scoreStr, ""];
+  const gcRegParts = gcRegPart.split("-");
+  const gcPkParts = gcPkPart ? gcPkPart.split("-") : ["", ""];
+  const [homeVal, setHomeVal] = useState(gcRegParts[0] ?? "");
+  const [awayVal, setAwayVal] = useState(gcRegParts[1] ?? "");
+  const [pkHomeVal, setPkHomeVal] = useState(gcPkParts[0] ?? "");
+  const [pkAwayVal, setPkAwayVal] = useState(gcPkParts[1] ?? "");
+  const isDraw = homeVal !== "" && awayVal !== "" && homeVal === awayVal;
 
   // Sync inputs if score prop changes externally
   useEffect(() => {
     if (!editing) {
-      const p = (score ?? "").split("-");
-      setHomeVal(p[0] ?? "");
-      setAwayVal(p[1] ?? "");
+      const s = score ?? "";
+      const [rp, pp] = s.includes(" PK") ? s.split(" PK") : [s, ""];
+      const rparts = rp.split("-");
+      const pparts = pp ? pp.split("-") : ["", ""];
+      setHomeVal(rparts[0] ?? "");
+      setAwayVal(rparts[1] ?? "");
+      setPkHomeVal(pparts[0] ?? "");
+      setPkAwayVal(pparts[1] ?? "");
     }
   }, [score, editing]);
 
   async function handleSave() {
     if (homeVal === "" || awayVal === "") return;
     setSaving(true);
+    const pkSuffix = (isDraw && pkHomeVal !== "" && pkAwayVal !== "")
+      ? ` PK${pkHomeVal}-${pkAwayVal}` : "";
+    const winner = `${homeVal}-${awayVal}${pkSuffix}`;
     try {
       const res = await fetch("/api/admin/bracket-results", {
         method: "POST",
@@ -96,11 +110,11 @@ function GameCard({
           challengeId: "va26-u13-ad",
           round: "group_score",
           key: String(id),
-          winner: `${homeVal}-${awayVal}`,
+          winner,
         }),
       });
       if (res.ok) {
-        onSave?.(String(id), `${homeVal}-${awayVal}`);
+        onSave?.(String(id), winner);
         setEditing(false);
       }
     } finally {
@@ -136,7 +150,14 @@ function GameCard({
         </div>
         <div className="flex-shrink-0 px-2 text-center min-w-[52px]">
           {score && !editing ? (
-            <span className="text-white font-bold text-base tabular-nums">{score.replace("-", " – ")}</span>
+            score.includes(" PK") ? (
+              <span className="text-center leading-tight">
+                <span className="block text-white font-bold text-base tabular-nums">{score.split(" PK")[0].replace("-", " – ")}</span>
+                <span className="block text-yellow-400 font-semibold text-xs">PKs {score.split(" PK")[1]}</span>
+              </span>
+            ) : (
+              <span className="text-white font-bold text-base tabular-nums">{score.replace("-", " – ")}</span>
+            )
           ) : !editing ? (
             <span className="text-brand-muted font-bold text-sm">vs</span>
           ) : null}
@@ -166,6 +187,24 @@ function GameCard({
             className="w-12 text-center text-base font-bold bg-gray-800 border border-gray-600 rounded-lg px-1 py-1 text-white focus:border-brand-green focus:outline-none"
           />
           <span className="text-xs text-brand-muted truncate flex-1 text-right">{away}</span>
+          {isDraw && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-yellow-400 font-semibold whitespace-nowrap">PKs:</span>
+              <input
+                type="number" min="0" max="20"
+                value={pkHomeVal}
+                onChange={(e) => setPkHomeVal(e.target.value)}
+                className="w-10 text-center text-sm font-bold bg-gray-800 border border-yellow-500/40 rounded-lg px-1 py-1 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+              />
+              <span className="text-yellow-600 font-bold text-xs">–</span>
+              <input
+                type="number" min="0" max="20"
+                value={pkAwayVal}
+                onChange={(e) => setPkAwayVal(e.target.value)}
+                className="w-10 text-center text-sm font-bold bg-gray-800 border border-yellow-500/40 rounded-lg px-1 py-1 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+              />
+            </div>
+          )}
           <button
             onClick={handleSave}
             disabled={homeVal === "" || awayVal === "" || saving}

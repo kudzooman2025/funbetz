@@ -716,12 +716,20 @@ function GroupScoreSection({
                     const stored = storedWinner(round, key);
                     const isSaving = saving === stateKey;
                     const val = pending[stateKey] ?? stored?.winner ?? "";
-                    const parts = val.split("-");
-                    const homeVal = parts[0] ?? "";
-                    const awayVal = parts[1] ?? "";
+                    const [regPart, pkPart] = val.includes(" PK") ? val.split(" PK") : [val, ""];
+                    const regParts = regPart.split("-");
+                    const homeVal = regParts[0] ?? "";
+                    const awayVal = regParts[1] ?? "";
+                    const pkParts = pkPart ? pkPart.split("-") : ["", ""];
+                    const pkHomeVal = pkParts[0] ?? "";
+                    const pkAwayVal = pkParts[1] ?? "";
+                    const isDraw = homeVal !== "" && awayVal !== "" && homeVal === awayVal;
 
-                    const setScore = (h: string, a: string) => {
+                    const setRegScore = (h: string, a: string) => {
                       setPending((p) => ({ ...p, [stateKey]: `${h}-${a}` }));
+                    };
+                    const setPkScore = (pkH: string, pkA: string) => {
+                      setPending((p) => ({ ...p, [stateKey]: `${homeVal}-${awayVal} PK${pkH}-${pkA}` }));
                     };
 
                     return (
@@ -740,7 +748,7 @@ function GroupScoreSection({
                           <input
                             type="number" min="0" max="20"
                             value={homeVal}
-                            onChange={(e) => setScore(e.target.value, awayVal)}
+                            onChange={(e) => setRegScore(e.target.value, awayVal)}
                             placeholder="–"
                             className="w-12 flex-shrink-0 text-center text-base font-semibold bg-gray-700 border border-gray-600 rounded-lg px-1 py-1.5 text-white focus:border-brand-green focus:outline-none"
                           />
@@ -761,11 +769,38 @@ function GroupScoreSection({
                           <input
                             type="number" min="0" max="20"
                             value={awayVal}
-                            onChange={(e) => setScore(homeVal, e.target.value)}
+                            onChange={(e) => setRegScore(homeVal, e.target.value)}
                             placeholder="–"
                             className="w-12 flex-shrink-0 text-center text-base font-semibold bg-gray-700 border border-gray-600 rounded-lg px-1 py-1.5 text-white focus:border-brand-green focus:outline-none"
                           />
                         </div>
+
+                        {/* PK Shootout — only when draw */}
+                        {isDraw && (
+                          <div className="mt-1 pt-2 border-t border-yellow-500/20 space-y-1.5">
+                            <p className="text-xs text-yellow-400 font-semibold">PK Shootout</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400 truncate flex-1">{game.home}</span>
+                              <input
+                                type="number" min="0" max="20"
+                                value={pkHomeVal}
+                                onChange={(e) => setPkScore(e.target.value, pkAwayVal)}
+                                placeholder="–"
+                                className="w-12 flex-shrink-0 text-center text-base font-semibold bg-gray-700 border border-yellow-500/40 rounded-lg px-1 py-1.5 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400 truncate flex-1">{game.away}</span>
+                              <input
+                                type="number" min="0" max="20"
+                                value={pkAwayVal}
+                                onChange={(e) => setPkScore(pkHomeVal, e.target.value)}
+                                placeholder="–"
+                                className="w-12 flex-shrink-0 text-center text-base font-semibold bg-gray-700 border border-yellow-500/40 rounded-lg px-1 py-1.5 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Actions */}
                         <div className="flex items-center justify-end gap-2 pt-1">
@@ -931,14 +966,22 @@ function ScoreSection({
           const stateKey = `${round}_${key}`;
           const stored = storedWinner(round, key);
           const isSaving = saving === stateKey;
-          // score stored as "home-away" string e.g. "2-1"
+          // score stored as "home-away" or "home-away PKpkH-pkA"
           const val = pending[stateKey] ?? stored?.winner ?? "";
-          const parts = val.split("-");
-          const homeVal = parts[0] ?? "";
-          const awayVal = parts[1] ?? "";
+          const [sRegPart, sPkPart] = val.includes(" PK") ? val.split(" PK") : [val, ""];
+          const sParts = sRegPart.split("-");
+          const homeVal = sParts[0] ?? "";
+          const awayVal = sParts[1] ?? "";
+          const sPkParts = sPkPart ? sPkPart.split("-") : ["", ""];
+          const pkHomeVal = sPkParts[0] ?? "";
+          const pkAwayVal = sPkParts[1] ?? "";
+          const isDraw = homeVal !== "" && awayVal !== "" && homeVal === awayVal;
 
-          const setScore = (h: string, a: string) => {
+          const setRegScore = (h: string, a: string) => {
             setPending((p) => ({ ...p, [stateKey]: `${h}-${a}` }));
+          };
+          const setPkScore = (pkH: string, pkA: string) => {
+            setPending((p) => ({ ...p, [stateKey]: `${homeVal}-${awayVal} PK${pkH}-${pkA}` }));
           };
 
           return (
@@ -951,7 +994,7 @@ function ScoreSection({
                 <input
                   type="number" min="0" max="20"
                   value={homeVal}
-                  onChange={(e) => setScore(e.target.value, awayVal)}
+                  onChange={(e) => setRegScore(e.target.value, awayVal)}
                   placeholder="0"
                   className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
                 />
@@ -959,11 +1002,33 @@ function ScoreSection({
                 <input
                   type="number" min="0" max="20"
                   value={awayVal}
-                  onChange={(e) => setScore(homeVal, e.target.value)}
+                  onChange={(e) => setRegScore(homeVal, e.target.value)}
                   placeholder="0"
                   className="w-10 text-center text-sm bg-gray-700 border border-gray-600 rounded px-1 py-1 text-white focus:border-brand-green focus:outline-none"
                 />
               </div>
+              {isDraw && (
+                <div className="mt-1 pt-2 border-t border-yellow-500/20 space-y-1">
+                  <p className="text-xs text-yellow-400 font-semibold">PKs</p>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number" min="0" max="20"
+                      value={pkHomeVal}
+                      onChange={(e) => setPkScore(e.target.value, pkAwayVal)}
+                      placeholder="0"
+                      className="w-10 text-center text-sm bg-gray-700 border border-yellow-500/40 rounded px-1 py-1 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+                    />
+                    <span className="text-yellow-600 font-bold">–</span>
+                    <input
+                      type="number" min="0" max="20"
+                      value={pkAwayVal}
+                      onChange={(e) => setPkScore(pkHomeVal, e.target.value)}
+                      placeholder="0"
+                      className="w-10 text-center text-sm bg-gray-700 border border-yellow-500/40 rounded px-1 py-1 text-yellow-300 focus:border-yellow-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => onSave(round, key)}
