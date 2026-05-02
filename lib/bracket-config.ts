@@ -21,7 +21,7 @@ export const BRACKET_ID = "va26-u13-ad";
 export const BRACKET_LOCK_TIME = new Date("2026-05-01T11:45:00Z"); // 7:45am EDT
 
 export const GROUPS: Record<string, string[]> = {
-  A: ["Carolina Velocity FC", "Cedar Stars Academy Monmouth", "Bethesda SC", "Springfield SYC"],
+  A: ["Carolina Velocity FC", "Shore FC", "Bethesda SC", "Springfield SYC"],
   B: ["Alexandria SA", "The Players Progression Academy", "Carolina Core FC", "West Virginia Soccer"],
   C: ["FC DELCO", "Triangle United SA", "The Football Academy", "The St. James FC"],
   D: ["Baltimore Armour", "PA Classics Harrisburg", "FC Richmond", "Ironbound Soccer Club"],
@@ -49,7 +49,7 @@ export interface GroupGame {
 
 export const GROUP_GAMES: GroupGame[] = [
   // ── May 1 — Round 1 ──────────────────────────────────────────────────────
-  { id: 19747, home: "Carolina Velocity FC",          away: "Cedar Stars Academy Monmouth", group: "A", round: 1, time: "7:45 AM",  day: 1 },
+  { id: 19747, home: "Carolina Velocity FC",          away: "Shore FC", group: "A", round: 1, time: "7:45 AM",  day: 1 },
   { id: 19748, home: "Bethesda SC",                   away: "Springfield SYC",               group: "A", round: 1, time: "7:45 AM",  day: 1 },
   { id: 19749, home: "Players Development Academy",   away: "Sporting Athletic Club",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
   { id: 19750, home: "Charlotte Independence SC",     away: "Virginia Revolution SC",        group: "H", round: 1, time: "7:45 AM",  day: 1 },
@@ -66,7 +66,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19717, home: "Queen City Mutiny FC",          away: "PA Classics",                   group: "F", round: 1, time: "12:15 PM", day: 1 },
   { id: 19718, home: "McLean Youth Soccer",           away: "Trenton City Soccer Club",      group: "F", round: 1, time: "12:15 PM", day: 1 },
   { id: 19699, home: "Springfield SYC",               away: "Carolina Velocity FC",          group: "A", round: 1, time: "1:45 PM",  day: 1 },
-  { id: 19700, home: "Cedar Stars Academy Monmouth",  away: "Bethesda SC",                   group: "A", round: 1, time: "1:45 PM",  day: 1 },
+  { id: 19700, home: "Shore FC",  away: "Bethesda SC",                   group: "A", round: 1, time: "1:45 PM",  day: 1 },
   { id: 19701, home: "Virginia Revolution SC",        away: "Players Development Academy",   group: "H", round: 1, time: "1:45 PM",  day: 1 },
   { id: 19702, home: "Sporting Athletic Club",        away: "Charlotte Independence SC",     group: "H", round: 1, time: "1:45 PM",  day: 1 },
   { id: 19723, home: "West Virginia Soccer",          away: "Alexandria SA",                 group: "B", round: 1, time: "3:15 PM",  day: 1 },
@@ -83,7 +83,7 @@ export const GROUP_GAMES: GroupGame[] = [
   { id: 19742, home: "PA Classics",                   away: "McLean Youth Soccer",           group: "F", round: 1, time: "6:15 PM",  day: 1 },
 
   // ── May 2 — Round 2 ──────────────────────────────────────────────────────
-  { id: 19787, home: "Springfield SYC",               away: "Cedar Stars Academy Monmouth",  group: "A", round: 2, time: "9:00 AM",  day: 2 },
+  { id: 19787, home: "Springfield SYC",               away: "Shore FC",  group: "A", round: 2, time: "9:00 AM",  day: 2 },
   { id: 19788, home: "Carolina Velocity FC",          away: "Bethesda SC",                   group: "A", round: 2, time: "9:00 AM",  day: 2 },
   { id: 19789, home: "Players Development Academy",   away: "Charlotte Independence SC",     group: "H", round: 2, time: "9:00 AM",  day: 2 },
   { id: 19790, home: "Virginia Revolution SC",        away: "Sporting Athletic Club",        group: "H", round: 2, time: "9:00 AM",  day: 2 },
@@ -110,7 +110,7 @@ export const TEAM_RANKINGS: Record<string, number> = {
   // Group A
   "Carolina Velocity FC":          211,
   "Springfield SYC":               380,
-  "Cedar Stars Academy Monmouth": 4131,
+  "Shore FC": 4131,
   "Bethesda SC":                   563,
   // Group B
   "Alexandria SA":                 561,

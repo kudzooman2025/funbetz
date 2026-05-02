@@ -43,7 +43,7 @@ const GAMES: {
 }[] = [
   // ─── Friday May 1 — Round 1 ───────────────────────────────────────────────
   // 7:45am EDT
-  { externalId: "mlsnext-va26-19747", home: "Carolina Velocity FC",           away: "Cedar Stars Academy Monmouth", start: edt("2026-05-01","07:45"), round: 1, group: "A" },
+  { externalId: "mlsnext-va26-19747", home: "Carolina Velocity FC",           away: "Shore FC", start: edt("2026-05-01","07:45"), round: 1, group: "A" },
   { externalId: "mlsnext-va26-19748", home: "Bethesda SC",                    away: "Springfield SYC",               start: edt("2026-05-01","07:45"), round: 1, group: "A" },
   { externalId: "mlsnext-va26-19749", home: "Players Development Academy",    away: "Sporting Athletic Club",        start: edt("2026-05-01","07:45"), round: 1, group: "H" },
   { externalId: "mlsnext-va26-19750", home: "Charlotte Independence SC",      away: "Virginia Revolution SC",        start: edt("2026-05-01","07:45"), round: 1, group: "H" },
@@ -64,7 +64,7 @@ const GAMES: {
   { externalId: "mlsnext-va26-19718", home: "McLean Youth Soccer",            away: "Trenton City Soccer Club",      start: edt("2026-05-01","12:15"), round: 1, group: "F" },
   // 1:45pm EDT
   { externalId: "mlsnext-va26-19699", home: "Springfield SYC",                away: "Carolina Velocity FC",          start: edt("2026-05-01","13:45"), round: 1, group: "A" },
-  { externalId: "mlsnext-va26-19700", home: "Cedar Stars Academy Monmouth",   away: "Bethesda SC",                   start: edt("2026-05-01","13:45"), round: 1, group: "A" },
+  { externalId: "mlsnext-va26-19700", home: "Shore FC",   away: "Bethesda SC",                   start: edt("2026-05-01","13:45"), round: 1, group: "A" },
   { externalId: "mlsnext-va26-19701", home: "Virginia Revolution SC",         away: "Players Development Academy",   start: edt("2026-05-01","13:45"), round: 1, group: "H" },
   { externalId: "mlsnext-va26-19702", home: "Sporting Athletic Club",         away: "Charlotte Independence SC",     start: edt("2026-05-01","13:45"), round: 1, group: "H" },
   // 3:15pm EDT
@@ -85,7 +85,7 @@ const GAMES: {
 
   // ─── Saturday May 2 — Round 2 ─────────────────────────────────────────────
   // 9:00am EDT
-  { externalId: "mlsnext-va26-19787", home: "Springfield SYC",                away: "Cedar Stars Academy Monmouth",  start: edt("2026-05-02","09:00"), round: 2, group: "A" },
+  { externalId: "mlsnext-va26-19787", home: "Springfield SYC",                away: "Shore FC",  start: edt("2026-05-02","09:00"), round: 2, group: "A" },
   { externalId: "mlsnext-va26-19788", home: "Carolina Velocity FC",           away: "Bethesda SC",                   start: edt("2026-05-02","09:00"), round: 2, group: "A" },
   { externalId: "mlsnext-va26-19789", home: "Players Development Academy",    away: "Charlotte Independence SC",     start: edt("2026-05-02","09:00"), round: 2, group: "H" },
   { externalId: "mlsnext-va26-19790", home: "Virginia Revolution SC",         away: "Sporting Athletic Club",        start: edt("2026-05-02","09:00"), round: 2, group: "H" },

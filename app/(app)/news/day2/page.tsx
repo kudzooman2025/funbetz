@@ -173,7 +173,7 @@ export default function Day2PreviewPage() {
           <div className="space-y-2">
             {[
               { time: "9:00 AM",  label: "PDA vs Charlotte Independence SC",         note: "Group H winner-takes-all", hot: true  },
-              { time: "9:00 AM",  label: "Springfield SYC vs Cedar Stars",            note: "Group A: SYC already through", hot: false },
+              { time: "9:00 AM",  label: "Springfield SYC vs Shore FC",            note: "Group A: SYC already through", hot: false },
               { time: "10:30 AM", label: "Real Futbol Academy vs Loudoun SC",         note: "Group G: Real Futbol safe, Loudoun needs bounce-back", hot: false },
               { time: "10:30 AM", label: "Alexandria SA vs Carolina Core FC",         note: "Group B: Alexandria through, order TBD", hot: false },
               { time: "12:00 PM", label: "Coppermine SC vs Fox Soccer Academy Car.",  note: "Group E decider — rankings vs form", hot: true  },
