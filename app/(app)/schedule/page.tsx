@@ -545,6 +545,16 @@ export default function SchedulePage() {
             </div>
             <span className="text-blue-400 text-xs font-semibold flex-shrink-0 ml-2">Read →</span>
           </a>
+          <a
+            href="/news/day2-recap"
+            className="flex items-center justify-between bg-brand-card border border-brand-green/30 rounded-xl px-4 py-3 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-brand-green text-sm">📰</span>
+              <span className="text-sm font-bold text-white">Day 2 Wrap-Up — Bracket Set, Late Drama</span>
+            </div>
+            <span className="text-brand-green text-xs font-semibold flex-shrink-0 ml-2">Share →</span>
+          </a>
           {renderGames(filteredDay2)}
         </div>
       )}
