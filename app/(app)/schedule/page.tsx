@@ -223,16 +223,23 @@ function Day1RecapArticle() {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="bg-brand-card border border-brand-border rounded-xl overflow-hidden mt-2">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-brand-green text-sm">📰</span>
-          <span className="text-sm font-bold text-white">Day 1 Roundup — Leaders Emerge, Group H Goes Down to the Wire</span>
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity flex-1 min-w-0"
+        >
+          <span className="text-brand-green text-sm flex-shrink-0">📰</span>
+          <span className="text-sm font-bold text-white truncate">Day 1 Roundup — Leaders Emerge, Group H Goes Down to the Wire</span>
+        </button>
+        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+          <a href="/news" className="text-brand-green text-xs font-semibold hover:text-green-400 transition-colors whitespace-nowrap">
+            Share →
+          </a>
+          <button onClick={() => setExpanded(!expanded)} className="text-brand-muted text-xs hover:text-white transition-colors whitespace-nowrap">
+            {expanded ? "▲" : "▼"}
+          </button>
         </div>
-        <span className="text-brand-muted text-xs ml-2 flex-shrink-0">{expanded ? "▲ Collapse" : "▼ Read"}</span>
-      </button>
+      </div>
 
       {expanded && (
         <div className="px-4 pb-5 space-y-4 border-t border-brand-border text-sm text-brand-muted leading-relaxed">

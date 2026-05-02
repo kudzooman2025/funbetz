@@ -266,6 +266,26 @@ export default function AdminPage() {
     setRecalculating(false);
   }
 
+  // ── Resolve Parlays ────────────────────────────────────────────────────────
+  const [resolvingParlays, setResolvingParlays] = useState(false);
+
+  async function handleResolveParlays() {
+    setResolvingParlays(true);
+    addLog("Triggering parlay resolution…");
+    try {
+      const res = await fetch("/api/admin/resolve-parlays", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        addLog(`Parlays resolved: ${data.resolved} | Won: ${data.won} | Lost: ${data.lost}${data.errors?.length ? ` | Errors: ${data.errors.join(", ")}` : ""}`);
+      } else {
+        addLog(`Parlay resolution failed: ${data.error}`);
+      }
+    } catch (err) {
+      addLog(`Error: ${String(err)}`);
+    }
+    setResolvingParlays(false);
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   function storedWinner(round: string, key: string): ResultRow | undefined {
     return results.find((r) => r.round === round && r.key === key);
@@ -311,6 +331,13 @@ export default function AdminPage() {
           className="px-4 py-2 bg-brand-green hover:bg-green-500 disabled:opacity-50 text-black text-sm font-medium rounded-lg transition-colors"
         >
           {recalculating ? "Calculating…" : "📊 Recalculate Scores"}
+        </button>
+        <button
+          onClick={handleResolveParlays}
+          disabled={resolvingParlays}
+          className="px-4 py-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {resolvingParlays ? "Resolving…" : "💰 Resolve Parlays"}
         </button>
         <a
           href={`/brackets/${CHALLENGE_ID}`}
