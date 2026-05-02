@@ -327,8 +327,8 @@ function ProjectedQFMatchups() {
     {
       qf: "QF 3", pairing: "Group C vs F",
       home: { group: "C", team: "FC DELCO", pts: 6, gd: 8 },
-      away: { group: "F", team: "Trenton City SC / Queen City*", pts: 3, gd: 2 },
-      note: "* Group F undecided — 1 game remaining each",
+      away: { group: "F", team: "Queen City Mutiny FC", pts: 5, gd: 1 },
+      note: "Group F confirmed — Queen City Mutiny FC wins on 5pts",
     },
     {
       qf: "QF 4", pairing: "Group B vs G",
