@@ -36,4 +36,5 @@ export const TEAM_LOGOS: Record<string, string> = {
 };
 
 export function getLogoUrl(teamName: string): string | null {
-  return TEAM_LOGOS[teamName] ?? 
+  return TEAM_LOGOS[teamName] ?? null;
+}
