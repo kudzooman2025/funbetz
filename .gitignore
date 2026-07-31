@@ -49,3 +49,6 @@ next-env.d.ts
 skills-lock.json
 
 .vercel
+
+# scratch (files moved aside during cleanup; safe to delete)
+/_to_delete/

@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { syncGolfSchedule } from "@/lib/golf-sync";
 
 export async function POST(req: Request) {
-  // Verify cron secret
+  // Verify cron secret. Fail CLOSED when the env var is missing — otherwise
+  // "Bearer undefined" would authenticate.
+  const secret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

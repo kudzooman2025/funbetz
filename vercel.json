@@ -6,15 +6,11 @@
     },
     {
       "path": "/api/cron/resolve-parlays",
-      "schedule": "0 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/sync-golf",
       "schedule": "0 8 * * 1"
-    },
-    {
-      "path": "/api/cron/sync-bracket",
-      "schedule": "0 12 * * *"
     }
   ]
 }

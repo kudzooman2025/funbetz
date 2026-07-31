@@ -19,8 +19,6 @@ const DESKTOP_NAV: NavItem[] = [
   { label: "My Parlays",  href: "/parlays" },
   { label: "Leaderboard", href: "/leaderboard" },
   { label: "Tournaments", href: "/tournaments" },
-  { label: "Brackets",    href: "/brackets" },
-  { label: "Schedule",    href: "/schedule" },
 ];
 
 // Mobile scrollable tab strip items
@@ -30,8 +28,6 @@ const MOBILE_TAB_NAV: NavItem[] = [
   { label: "🎟️ Parlays",  href: "/parlays" },
   { label: "🏆 Ranks",     href: "/leaderboard" },
   { label: "⭐ Groups",    href: "/tournaments" },
-  { label: "🏆 Brackets",  href: "/brackets" },
-  { label: "📅 Schedule",  href: "/schedule" },
   { label: "💰 Wallet",    href: "/wallet" },
 ];
 
@@ -75,14 +71,6 @@ export function Navbar() {
               {label}
             </Link>
           ))}
-          <a
-            href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-gold hover:text-yellow-300 transition-colors text-xs font-semibold border border-brand-gold/40 px-2.5 py-1 rounded-full"
-          >
-            🌐 Official Standings
-          </a>
         </nav>
 
         {/* Right side: wallet + user */}
@@ -142,14 +130,6 @@ export function Navbar() {
             {label}
           </Link>
         ))}
-        <a
-          href="https://www.mlssoccer.com/mlsnext/tournaments/cup/qualifiers/standings/virginia_regional"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-shrink-0 px-4 py-2.5 text-xs text-brand-gold hover:text-yellow-300 whitespace-nowrap font-medium"
-        >
-          🌐 Official Site
-        </a>
       </nav>
     </header>
   );

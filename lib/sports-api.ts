@@ -100,6 +100,21 @@ export function mapApiStatusToGameStatus(
 }
 
 /**
+ * Parse a TheSportsDB date/time string as UTC.
+ *
+ * TheSportsDB returns times in UTC but WITHOUT a timezone suffix
+ * (e.g. "2025-09-05 00:15:00" or "2025-09-05T00:15:00"). A bare
+ * `new Date(...)` would parse that as server-local time, shifting every
+ * kickoff on any non-UTC host — wrong betting windows and a wrong 1-hour
+ * lock. Normalize to ISO and append "Z" unless an offset is present.
+ */
+export function parseUtcTimestamp(raw: string): Date {
+  const iso = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(iso);
+  return new Date(hasTimezone ? iso : `${iso}Z`);
+}
+
+/**
  * Parse a TheSportsDB event into the data shape needed for our Game model.
  */
 export function parseEventToGameData(
@@ -124,7 +139,7 @@ export function parseEventToGameData(
     awayTeam: event.strAwayTeam,
     homeTeamBadge: event.strHomeTeamBadge || null,
     awayTeamBadge: event.strAwayTeamBadge || null,
-    scheduledStart: new Date(event.strTimestamp || `${event.dateEvent}T${event.strTime}`),
+    scheduledStart: parseUtcTimestamp(event.strTimestamp || `${event.dateEvent}T${event.strTime}`),
     homeScore,
     awayScore,
     status,

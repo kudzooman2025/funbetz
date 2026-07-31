@@ -7,17 +7,6 @@ import { useTicketStore } from "@/stores/ticket-store";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 import { MIN_PARLAY_GAMES, MAX_PARLAY_GAMES, GAME_BUFFER_HOURS } from "@/lib/constants";
 import type { GameResponse } from "@/lib/types";
-import { getLogoUrl } from "@/lib/team-logos";
-
-const WC_ROUND_NAMES: Record<number, string> = {
-  1: "Group Stage · Matchday 1",
-  2: "Group Stage · Matchday 2",
-  3: "Group Stage · Matchday 3",
-  4: "Round of 32",
-  5: "Round of 16",
-  6: "Quarterfinals",
-  7: "Semifinals & Final",
-};
 
 const PGA_ROUND_NAMES: Record<number, string> = {
   1: "Round 1 · Thursday",
@@ -34,16 +23,6 @@ const LIV_ROUND_NAMES: Record<number, string> = {
 
 const GOLF_SPORTS = new Set<LeagueKey>(["PGA", "LIV"]);
 
-function getBettingWindowBounds() {
-  const now = new Date();
-  const start = new Date(now.getTime() + GAME_BUFFER_HOURS * 60 * 60 * 1000);
-  const dayOfWeek = now.getUTCDay();
-  const daysUntilNextSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
-  const end = new Date(now);
-  end.setUTCDate(now.getUTCDate() + daysUntilNextSunday);
-  end.setUTCHours(23, 59, 59, 999);
-  return { start, end };
-}
 
 export default function GamesPage() {
   return (
@@ -67,7 +46,6 @@ function GamesContent() {
     .split(",")
     .filter((s) => LEAGUE_KEYS.includes(s as LeagueKey)) as LeagueKey[];
 
-  const isWorldCupOnly = sportKeys.length === 1 && sportKeys[0] === "WORLD_CUP";
   const isGolfOnly = sportKeys.length > 0 && sportKeys.every((k) => GOLF_SPORTS.has(k));
 
   const [games, setGames] = useState<GameResponse[]>([]);
@@ -83,7 +61,6 @@ function GamesContent() {
       try {
         const params = new URLSearchParams();
         if (sportKeys.length > 0) params.set("sport", sportKeys.join(","));
-        if (isWorldCupOnly) params.set("preview", "true");
         const res = await fetch(`/api/games?${params.toString()}`);
         if (!res.ok) throw new Error("Failed to fetch games");
         const data = await res.json();
@@ -104,24 +81,11 @@ function GamesContent() {
   const selectedCount = selectedGames.length;
   const canBuild = selectedCount >= MIN_PARLAY_GAMES;
 
-  // Compute betting window bounds client-side for bettability checks
-  const { start: windowStart, end: windowEnd } = getBettingWindowBounds();
-
   // Group games by sport
   const gamesBySport: Record<string, GameResponse[]> = {};
   for (const game of games) {
     if (!gamesBySport[game.sport]) gamesBySport[game.sport] = [];
     gamesBySport[game.sport].push(game);
-  }
-
-  // For World Cup preview: group games by round number
-  const wcGamesByRound: Record<number, GameResponse[]> = {};
-  if (isWorldCupOnly) {
-    for (const game of games) {
-      const r = game.round ?? 0;
-      if (!wcGamesByRound[r]) wcGamesByRound[r] = [];
-      wcGamesByRound[r].push(game);
-    }
   }
 
   // For golf: group by tournament (league) → round
@@ -254,113 +218,6 @@ function GamesContent() {
               </div>
             );
           })}
-        </div>
-      ) : isWorldCupOnly ? (
-        /* ── World Cup: grouped by round with bettable/locked state ── */
-        <div className="space-y-8">
-          {Object.keys(wcGamesByRound)
-            .map(Number)
-            .sort((a, b) => a - b)
-            .map((roundNum) => {
-              const roundGames = wcGamesByRound[roundNum];
-              const roundName = WC_ROUND_NAMES[roundNum] ?? `Round ${roundNum}`;
-              // First game in this round — used to show when picks open
-              const firstGame = roundGames[0];
-              const windowOpens = new Date(firstGame.scheduledStart);
-              windowOpens.setTime(windowOpens.getTime() - 7 * 24 * 60 * 60 * 1000);
-              // A round is bettable if ANY of its games fall within the window
-              const roundHasBettable = roundGames.some((g) => {
-                const t = new Date(g.scheduledStart).getTime();
-                return t >= windowStart.getTime() && t <= windowEnd.getTime();
-              });
-              const bettableCount = roundGames.filter((g) => {
-                const t = new Date(g.scheduledStart).getTime();
-                return t >= windowStart.getTime() && t <= windowEnd.getTime();
-              }).length;
-
-              return (
-                <div key={roundNum}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <h2 className="text-base font-bold text-white">{roundName}</h2>
-                    <span className="text-brand-muted text-xs">
-                      {roundGames.length} game{roundGames.length !== 1 ? "s" : ""}
-                    </span>
-                    {roundHasBettable ? (
-                      <span className="text-xs bg-brand-green/20 text-brand-green border border-brand-green/30 rounded-full px-2 py-0.5">
-                        {bettableCount} open for picks
-                      </span>
-                    ) : (
-                      <span className="text-xs text-brand-muted border border-brand-border rounded-full px-2 py-0.5">
-                        🔒 Picks not open yet
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {roundGames.map((game) => {
-                      const gameTime = new Date(game.scheduledStart).getTime();
-                      const isBettable =
-                        gameTime >= windowStart.getTime() &&
-                        gameTime <= windowEnd.getTime();
-                      const isSelected = selectedGames.some(
-                        (g) => g.gameId === game.id
-                      );
-                      const selectedPick = selectedGames.find(
-                        (g) => g.gameId === game.id
-                      )?.pickedTeam;
-                      const atMax =
-                        selectedCount >= MAX_PARLAY_GAMES && !isSelected;
-
-                      return (
-                        <GameRow
-                          key={game.id}
-                          game={game}
-                          isSelected={isSelected}
-                          selectedPick={selectedPick}
-                          disabled={atMax}
-                          bettable={isBettable}
-                          onPickHome={() => {
-                            if (isSelected && selectedPick === game.homeTeam) {
-                              removeGame(game.id);
-                            } else {
-                              if (isSelected) removeGame(game.id);
-                              addGame(
-                                {
-                                  gameId: game.id,
-                                  homeTeam: game.homeTeam,
-                                  awayTeam: game.awayTeam,
-                                  homeTeamBadge: game.homeTeamBadge,
-                                  awayTeamBadge: game.awayTeamBadge,
-                                  scheduledStart: game.scheduledStart,
-                                },
-                                game.homeTeam
-                              );
-                            }
-                          }}
-                          onPickAway={() => {
-                            if (isSelected && selectedPick === game.awayTeam) {
-                              removeGame(game.id);
-                            } else {
-                              if (isSelected) removeGame(game.id);
-                              addGame(
-                                {
-                                  gameId: game.id,
-                                  homeTeam: game.homeTeam,
-                                  awayTeam: game.awayTeam,
-                                  homeTeamBadge: game.homeTeamBadge,
-                                  awayTeamBadge: game.awayTeamBadge,
-                                  scheduledStart: game.scheduledStart,
-                                },
-                                game.awayTeam
-                              );
-                            }
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
         </div>
       ) : (
         /* ── All other sports: existing layout grouped by sport ── */
@@ -523,8 +380,7 @@ function TeamBadge({
   badgeUrl: string | null;
   muted?: boolean;
 }) {
-  const localLogo = getLogoUrl(name);
-  const src = badgeUrl || localLogo;
+  const src = badgeUrl;
 
   if (!src) {
     return (

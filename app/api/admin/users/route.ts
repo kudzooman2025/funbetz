@@ -31,9 +31,6 @@ export async function GET() {
       isAdmin: true,
       createdAt: true,
       walletBalance: true,
-      bracketEntries: {
-        select: { score: true },
-      },
     },
     orderBy: { createdAt: "asc" },
   });

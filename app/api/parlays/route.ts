@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createParlaySchema } from "@/lib/validators";
-import { MULTIPLIERS, GAME_BUFFER_HOURS, WALLET_MAX } from "@/lib/constants";
+import { MULTIPLIERS, GAME_BUFFER_HOURS } from "@/lib/constants";
+import { getBettingWindow } from "@/lib/utils";
 
 export async function GET() {
   const session = await auth();
@@ -109,6 +110,10 @@ export async function POST(req: Request) {
   const bufferTime = new Date(
     Date.now() + GAME_BUFFER_HOURS * 60 * 60 * 1000
   );
+  // Enforce the betting window server-side too — the games listing already
+  // filters to the window, but a direct POST could otherwise bet games far
+  // in the future.
+  const { end: windowEnd } = getBettingWindow();
 
   const dbGames = await prisma.game.findMany({
     where: { id: { in: gameIds } },
@@ -136,6 +141,14 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    if (game.scheduledStart > windowEnd) {
+      return NextResponse.json(
+        {
+          error: `Game "${game.homeTeam} vs ${game.awayTeam}" is outside the current betting window`,
+        },
+        { status: 400 }
+      );
+    }
   }
 
   // Verify picked teams are valid
@@ -153,21 +166,17 @@ export async function POST(req: Request) {
   // Use a transaction for wallet deduction + parlay creation
   try {
     const parlay = await prisma.$transaction(async (tx) => {
-      // Get current user with wallet balance
-      const user = await tx.user.findUniqueOrThrow({
-        where: { id: session.user.id },
-        select: { walletBalance: true },
-      });
-
-      if (user.walletBalance < betAmount) {
-        throw new Error("Insufficient wallet balance");
-      }
-
-      // Deduct from wallet
-      await tx.user.update({
-        where: { id: session.user.id },
+      // Conditionally debit the wallet in ONE statement: the balance check and
+      // the decrement must be atomic, otherwise two concurrent bets can both
+      // pass a read-then-check and drive the balance negative.
+      const debited = await tx.user.updateMany({
+        where: { id: session.user.id, walletBalance: { gte: betAmount } },
         data: { walletBalance: { decrement: betAmount } },
       });
+
+      if (debited.count === 0) {
+        throw new Error("Insufficient wallet balance");
+      }
 
       // Create parlay with game picks
       const newParlay = await tx.parlay.create({

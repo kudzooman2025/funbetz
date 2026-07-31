@@ -1,19 +1,25 @@
 import { GAME_BUFFER_HOURS } from "./constants";
 
 /**
- * Returns the betting window: now + buffer through end of next Sunday.
- * If today is Sunday, extends to end of the FOLLOWING Sunday.
+ * Returns the betting window: now + buffer through the end of the current
+ * betting week.
+ *
+ * The week boundary is Tuesday 07:59:59 UTC (~3–4am ET), so the window always
+ * covers a full football week — Thursday Night Football through the end of
+ * Monday Night Football (which can run past midnight ET / 05:00 UTC Tuesday).
+ * The previous Sunday-23:59-UTC boundary cut off SNF and MNF (~7:59pm ET).
  */
 export function getBettingWindow(): { start: Date; end: Date } {
   const now = new Date();
   const start = new Date(now.getTime() + GAME_BUFFER_HOURS * 60 * 60 * 1000);
 
-  const dayOfWeek = now.getUTCDay(); // 0 = Sunday
-  const daysUntilNextSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
-
   const end = new Date(now);
-  end.setUTCDate(now.getUTCDate() + daysUntilNextSunday);
-  end.setUTCHours(23, 59, 59, 999);
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 2 = Tuesday
+  let daysUntilTuesday = (2 - dayOfWeek + 7) % 7;
+  // If it's already Tuesday past the boundary, roll to next week's Tuesday
+  if (daysUntilTuesday === 0 && now.getUTCHours() >= 8) daysUntilTuesday = 7;
+  end.setUTCDate(now.getUTCDate() + daysUntilTuesday);
+  end.setUTCHours(7, 59, 59, 999);
 
   return { start, end };
 }

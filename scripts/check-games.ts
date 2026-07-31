@@ -29,11 +29,13 @@ async function main() {
   // Show betting window
   const now = new Date();
   const bufferStart = new Date(now.getTime() + 60 * 60 * 1000);
+  // Mirrors lib/utils.ts getBettingWindow(): week ends Tuesday 07:59:59 UTC
   const dayOfWeek = now.getUTCDay();
-  const daysUntilNextSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+  let daysUntilTuesday = (2 - dayOfWeek + 7) % 7;
+  if (daysUntilTuesday === 0 && now.getUTCHours() >= 8) daysUntilTuesday = 7;
   const end = new Date(now);
-  end.setUTCDate(now.getUTCDate() + daysUntilNextSunday);
-  end.setUTCHours(23, 59, 59, 999);
+  end.setUTCDate(now.getUTCDate() + daysUntilTuesday);
+  end.setUTCHours(7, 59, 59, 999);
   console.log("\nBetting window:", bufferStart.toISOString(), "to", end.toISOString());
 
   const inWindow = await prisma.game.count({
