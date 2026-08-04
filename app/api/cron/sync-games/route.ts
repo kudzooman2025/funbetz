@@ -75,42 +75,62 @@ async function syncLeagueRounds(
   for (let r = startRound; r <= endRound; r++) {
     try {
       const events = await fetchRoundEvents(league, r);
-
-      for (const event of events) {
-        const gameData = parseEventToGameData(event, league);
-
-        await prisma.game.upsert({
-          where: { externalId: gameData.externalId },
-          update: {
-            homeScore: gameData.homeScore,
-            awayScore: gameData.awayScore,
-            status: gameData.status,
-            homeTeamBadge: gameData.homeTeamBadge,
-            awayTeamBadge: gameData.awayTeamBadge,
-            // Refresh kickoff time + round so postponed/flexed games (common
-            // in the NFL) get corrected — the 1-hour betting lock depends on
-            // scheduledStart being accurate.
-            scheduledStart: gameData.scheduledStart,
-            round: gameData.round,
-          },
-          create: gameData,
-        });
-
-        // Set completedAt only once (first time game is marked completed)
-        if (gameData.status === "COMPLETED") {
-          await prisma.game.updateMany({
-            where: { externalId: gameData.externalId, completedAt: null },
-            data: { completedAt: new Date() },
-          });
-        }
-
-        results.synced++;
-      }
-
+      await upsertEvents(events, league, results);
       await delay(2100); // Stay under 30 req/min
     } catch (error) {
       results.errors.push(`${league} round ${r}: ${String(error)}`);
     }
+  }
+
+  // Preseason: TheSportsDB stores exhibition games under a special round
+  // number (e.g. NFL preseason = round 500). Sync it until the regular
+  // season starts so August games are bettable.
+  const preseasonRound = (config as { preseasonRound?: number }).preseasonRound;
+  if (preseasonRound && new Date() < new Date(`${config.seasonStart}T00:00:00Z`)) {
+    try {
+      const events = await fetchRoundEvents(league, preseasonRound);
+      await upsertEvents(events, league, results);
+      await delay(2100);
+    } catch (error) {
+      results.errors.push(`${league} preseason: ${String(error)}`);
+    }
+  }
+}
+
+async function upsertEvents(
+  events: Awaited<ReturnType<typeof fetchRoundEvents>>,
+  league: LeagueKey,
+  results: { synced: number; updated: number; errors: string[] }
+) {
+  for (const event of events) {
+    const gameData = parseEventToGameData(event, league);
+
+    await prisma.game.upsert({
+      where: { externalId: gameData.externalId },
+      update: {
+        homeScore: gameData.homeScore,
+        awayScore: gameData.awayScore,
+        status: gameData.status,
+        homeTeamBadge: gameData.homeTeamBadge,
+        awayTeamBadge: gameData.awayTeamBadge,
+        // Refresh kickoff time + round so postponed/flexed games (common
+        // in the NFL) get corrected — the 1-hour betting lock depends on
+        // scheduledStart being accurate.
+        scheduledStart: gameData.scheduledStart,
+        round: gameData.round,
+      },
+      create: gameData,
+    });
+
+    // Set completedAt only once (first time game is marked completed)
+    if (gameData.status === "COMPLETED") {
+      await prisma.game.updateMany({
+        where: { externalId: gameData.externalId, completedAt: null },
+        data: { completedAt: new Date() },
+      });
+    }
+
+    results.synced++;
   }
 }
 
