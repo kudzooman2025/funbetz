@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getBettingWindow } from "@/lib/utils";
 import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
@@ -7,12 +6,9 @@ import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 /** Safety cap so a full multi-league season can't return an unbounded payload. */
 const MAX_GAMES = 1500;
 
+// Public: the schedule is browsable without an account. Placing a bet still
+// requires one — POST /api/parlays is authenticated and re-checks the window.
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(req.url);
   const sportParam = searchParams.get("sport")?.toUpperCase();
 

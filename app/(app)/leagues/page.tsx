@@ -34,9 +34,9 @@ export default function TournamentsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setJoinError(data.error ?? "Failed to join tournament.");
+        setJoinError(data.error ?? "Failed to join league.");
       } else {
-        router.push(`/tournaments/${data.tournament.id}`);
+        router.push(`/leagues/${data.tournament.id}`);
       }
     } catch {
       setJoinError("Something went wrong.");
@@ -51,9 +51,9 @@ export default function TournamentsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Tournaments</h1>
+        <h1 className="text-2xl font-bold">Leagues</h1>
         <Link
-          href="/tournaments/create"
+          href="/leagues/create"
           className="bg-brand-green text-black font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-green/90 transition-colors"
         >
           + Create
@@ -96,7 +96,7 @@ export default function TournamentsPage() {
       ) : tournaments.length === 0 ? (
         <div className="bg-brand-card border border-brand-border rounded-lg p-10 text-center">
           <p className="text-3xl mb-3">🏆</p>
-          <p className="text-brand-muted mb-1">No tournaments yet.</p>
+          <p className="text-brand-muted mb-1">No leagues yet.</p>
           <p className="text-sm text-brand-muted">
             Create one or join a friend&apos;s with an invite code.
           </p>
@@ -166,7 +166,7 @@ function TournamentCard({ tournament: t }: { tournament: TournamentSummary }) {
       : "Live";
 
   return (
-    <Link href={`/tournaments/${t.id}`}>
+    <Link href={`/leagues/${t.id}`}>
       <div className="bg-brand-card border border-brand-border rounded-lg p-4 hover:border-brand-green/40 transition-colors cursor-pointer">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">

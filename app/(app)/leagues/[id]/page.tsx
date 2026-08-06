@@ -26,13 +26,13 @@ export default function TournamentDetailPage() {
     try {
       const res = await fetch(`/api/tournaments/${id}`);
       if (!res.ok) {
-        router.push("/tournaments");
+        router.push("/leagues");
         return;
       }
       const data = await res.json();
       setTournament(data.tournament);
     } catch {
-      router.push("/tournaments");
+      router.push("/leagues");
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function TournamentDetailPage() {
   }
 
   async function removeMember(userId: string, username: string) {
-    if (!confirm(`Remove ${username} from this tournament?`)) return;
+    if (!confirm(`Remove ${username} from this league?`)) return;
     setActionError("");
     const res = await fetch(`/api/tournaments/${id}/members/${userId}`, { method: "DELETE" });
     const data = await res.json();
@@ -82,26 +82,26 @@ export default function TournamentDetailPage() {
   }
 
   async function leaveTournament() {
-    if (!confirm("Leave this tournament?")) return;
+    if (!confirm("Leave this league?")) return;
     setActionError("");
     const res = await fetch(`/api/tournaments/${id}/leave`, { method: "POST" });
     const data = await res.json();
     if (!res.ok) {
-      setActionError(data.error ?? "Failed to leave tournament.");
+      setActionError(data.error ?? "Failed to leave league.");
     } else {
-      router.push("/tournaments");
+      router.push("/leagues");
     }
   }
 
   async function cancelTournament() {
-    if (!confirm("Cancel this tournament? This cannot be undone.")) return;
+    if (!confirm("Cancel this league? This cannot be undone.")) return;
     setActionError("");
     const res = await fetch(`/api/tournaments/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setActionError(data.error ?? "Failed to cancel tournament.");
+      setActionError(data.error ?? "Failed to cancel league.");
     } else {
-      router.push("/tournaments");
+      router.push("/leagues");
     }
   }
 
@@ -138,8 +138,8 @@ export default function TournamentDetailPage() {
   return (
     <div>
       {/* Back link */}
-      <Link href="/tournaments" className="text-brand-muted hover:text-white text-sm transition-colors">
-        ← Tournaments
+      <Link href="/leagues" className="text-brand-muted hover:text-white text-sm transition-colors">
+        ← Leagues
       </Link>
 
       {/* Header */}
@@ -320,7 +320,7 @@ export default function TournamentDetailPage() {
           <div className="bg-brand-card border border-brand-border rounded-lg p-4">
             <p className="text-xs text-brand-muted uppercase tracking-wider mb-2">Scoring</p>
             <p className="text-sm text-brand-muted leading-relaxed">
-              Scores reflect your leaderboard points earned from parlays placed during the tournament period
+              Scores reflect your leaderboard points earned from parlays placed during the league period
               that include at least one game from the selected sports. Global leaderboard totals are unaffected.
             </p>
           </div>
@@ -334,14 +334,14 @@ export default function TournamentDetailPage() {
                   onClick={cancelTournament}
                   className="text-sm text-red-400 border border-red-500/30 rounded-lg px-4 py-2 hover:bg-red-500/10 transition-colors"
                 >
-                  Cancel Tournament
+                  Cancel League
                 </button>
               ) : (
                 <button
                   onClick={leaveTournament}
                   className="text-sm text-red-400 border border-red-500/30 rounded-lg px-4 py-2 hover:bg-red-500/10 transition-colors"
                 >
-                  Leave Tournament
+                  Leave League
                 </button>
               )}
             </div>

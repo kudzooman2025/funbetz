@@ -37,9 +37,9 @@ export default function CreateTournamentPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Failed to create tournament.");
+        setError(data.error ?? "Failed to create league.");
       } else {
-        router.push(`/tournaments/${data.tournament.id}`);
+        router.push(`/leagues/${data.tournament.id}`);
       }
     } catch {
       setError("Something went wrong.");
@@ -54,22 +54,22 @@ export default function CreateTournamentPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/tournaments" className="text-brand-muted hover:text-white transition-colors text-sm">
-          ← Tournaments
+        <Link href="/leagues" className="text-brand-muted hover:text-white transition-colors text-sm">
+          ← Leagues
         </Link>
         <span className="text-brand-border">/</span>
-        <h1 className="text-2xl font-bold">Create Tournament</h1>
+        <h1 className="text-2xl font-bold">Create League</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium mb-1.5">Tournament Name</label>
+          <label className="block text-sm font-medium mb-1.5">League Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Office Bracket 2026"
+            placeholder="e.g. Office League 2026"
             required
             minLength={3}
             maxLength={50}
@@ -154,10 +154,10 @@ export default function CreateTournamentPage() {
             disabled={loading}
             className="bg-brand-green text-black font-semibold px-6 py-2.5 rounded-lg text-sm hover:bg-brand-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Creating…" : "Create Tournament"}
+            {loading ? "Creating…" : "Create League"}
           </button>
           <Link
-            href="/tournaments"
+            href="/leagues"
             className="px-4 py-2.5 rounded-lg border border-brand-border text-sm text-brand-muted hover:border-brand-green/40 transition-colors"
           >
             Cancel

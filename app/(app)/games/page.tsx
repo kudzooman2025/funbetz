@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useTicketStore } from "@/stores/ticket-store";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
@@ -27,16 +28,36 @@ const GOLF_SPORTS = new Set<LeagueKey>(["PGA", "LIV"]);
 const POSTSEASON_ROUND = 100;
 const PRESEASON_ROUND = 500;
 
+// ESPN files the NFL postseason as weeks 1-5 under its own season type.
+const NFL_POSTSEASON_LABELS = [
+  "Wild Card",
+  "Divisional Round",
+  "Conference Championships",
+  "Pro Bowl",
+  "Super Bowl",
+];
+
 function roundLabel(sport: LeagueKey, round: number): string {
   if (round >= PRESEASON_ROUND) {
     const week = round - PRESEASON_ROUND;
     return week > 0 ? `Preseason Week ${week}` : "Preseason";
   }
   if (round >= POSTSEASON_ROUND) {
-    return sport === "NCAAF" ? "Bowls & Playoff" : "Playoffs";
+    if (sport === "NCAAF") return "Bowls & Playoff";
+    return NFL_POSTSEASON_LABELS[round - POSTSEASON_ROUND - 1] ?? "Playoffs";
   }
   if (sport === "EPL") return `Matchweek ${round}`;
   return `Week ${round}`;
+}
+
+/**
+ * Round numbers are banded (preseason 500+, postseason 100+), which is not
+ * chronological. Sort so the season reads in the order it is played:
+ * preseason, then regular season, then postseason.
+ */
+function roundSortKey(round: number): number {
+  if (round >= PRESEASON_ROUND) return round - PRESEASON_ROUND - 1000;
+  return round;
 }
 
 function groupByRound(games: GameResponse[]): Record<number, GameResponse[]> {
@@ -67,6 +88,8 @@ export default function GamesPage() {
 
 function GamesContent() {
   const searchParams = useSearchParams();
+  const { data: session, status: authStatus } = useSession();
+  const isSignedIn = Boolean(session?.user);
   const sportsParam = searchParams.get("sports")?.toUpperCase() || "";
   const sportKeys = sportsParam
     .split(",")
@@ -101,11 +124,13 @@ function GamesContent() {
       }
     }
     fetchGames();
-    fetch("/api/wallet")
-      .then((res) => res.json())
-      .then((data) => setWalletBalance(data.balance))
-      .catch(() => {});
-  }, [sportsParam]);
+    if (isSignedIn) {
+      fetch("/api/wallet")
+        .then((res) => res.json())
+        .then((data) => setWalletBalance(data.balance))
+        .catch(() => {});
+    }
+  }, [sportsParam, isSignedIn]);
 
   const selectedCount = selectedGames.length;
   const canBuild = selectedCount >= MIN_PARLAY_GAMES;
@@ -256,7 +281,7 @@ function GamesContent() {
             const byRound = groupByRound(sportGames);
             const roundKeys = Object.keys(byRound)
               .map(Number)
-              .sort((a, b) => a - b);
+              .sort((a, b) => roundSortKey(a) - roundSortKey(b));
             const showRoundHeaders = roundKeys.length > 1;
 
             return (
@@ -288,8 +313,8 @@ function GamesContent() {
                             }
                             className="w-full flex items-center gap-3 mb-2 text-left"
                           >
-                            <span className="text-brand-muted text-xs w-3 shrink-0">
-                              {isOpen ? "\u25BE" : "\u25B8"}
+                            <span className="text-brand-muted text-[11px] font-semibold w-16 shrink-0">
+                              {isOpen ? "\u25BE Collapse" : "\u25B8 Expand"}
                             </span>
                             <h3 className="text-sm font-bold text-white">
                               {roundLabel(sport as LeagueKey, roundNum)}
@@ -393,7 +418,14 @@ function GamesContent() {
                   : ""}
               </span>
             </div>
-            {canBuild ? (
+            {canBuild && !isSignedIn && authStatus !== "loading" ? (
+              <Link
+                href="/register"
+                className="px-4 py-2 rounded-lg font-bold text-sm bg-brand-gold text-brand-dark hover:bg-yellow-300 transition-colors"
+              >
+                Sign up to bet &rarr;
+              </Link>
+            ) : canBuild ? (
               walletBalance === 0 ? (
                 <button
                   onClick={() => setShowBrokePopup(true)}

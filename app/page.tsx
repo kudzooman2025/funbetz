@@ -40,7 +40,7 @@ export default function LandingPage() {
 
         {/* CTA */}
         <Link
-          href="/register"
+          href="/dashboard"
           className="inline-block bg-brand-green text-brand-dark font-bold text-lg px-8 py-3 rounded-lg hover:bg-green-400 transition-colors"
         >
           Get Started

@@ -18,7 +18,7 @@ const DESKTOP_NAV: NavItem[] = [
   { label: "Games",       href: "/games",      link: DEFAULT_GAMES_HREF },
   { label: "My Parlays",  href: "/parlays" },
   { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Tournaments", href: "/tournaments" },
+  { label: "Leagues", href: "/leagues" },
 ];
 
 // Mobile scrollable tab strip items
@@ -27,7 +27,7 @@ const MOBILE_TAB_NAV: NavItem[] = [
   { label: "🎮 Games",     href: "/games",      link: DEFAULT_GAMES_HREF },
   { label: "🎟️ Parlays",  href: "/parlays" },
   { label: "🏆 Ranks",     href: "/leaderboard" },
-  { label: "⭐ Groups",    href: "/tournaments" },
+  { label: "⭐ Leagues",    href: "/leagues" },
   { label: "💰 Wallet",    href: "/wallet" },
 ];
 
@@ -73,8 +73,25 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Right side: wallet + user */}
+        {/* Right side: wallet + user, or sign-in prompts for guests */}
         <div className="flex items-center gap-3">
+          {!session?.user ? (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm font-bold bg-brand-green text-brand-dark px-3 py-1.5 rounded-lg hover:bg-green-400 transition-colors"
+              >
+                Sign Up
+              </Link>
+            </>
+          ) : (
+          <>
           <WalletBadge />
 
           <div className="relative">
@@ -112,6 +129,8 @@ export function Navbar() {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
 

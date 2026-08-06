@@ -7,14 +7,17 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isAppRoute = nextUrl.pathname.startsWith("/dashboard") ||
-        nextUrl.pathname.startsWith("/games") ||
+
+      // Guests can browse the app — dashboard, schedules and the leaderboard
+      // are open so someone can look around before signing up. Anything that
+      // touches a wallet or an actual bet still requires an account.
+      const requiresAccount =
         nextUrl.pathname.startsWith("/ticket") ||
         nextUrl.pathname.startsWith("/parlays") ||
-        nextUrl.pathname.startsWith("/leaderboard") ||
-        nextUrl.pathname.startsWith("/wallet");
+        nextUrl.pathname.startsWith("/wallet") ||
+        nextUrl.pathname.startsWith("/admin");
 
-      if (isAppRoute) {
+      if (requiresAccount) {
         return isLoggedIn;
       }
 
