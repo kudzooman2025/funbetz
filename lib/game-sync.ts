@@ -14,7 +14,8 @@
 
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "./constants";
 import { prisma } from "./prisma";
-import { fetchFbsSeason, cfbProviderName } from "./cfb-source";
+import { fetchFbsSeason, cfbProviderName, cfbPrefix } from "./cfb-source";
+import { fetchEspnLeagueSeason, espnPrefix, isEspnLeague } from "./espn-source";
 import {
   fetchRoundEvents,
   fetchEventById,
@@ -187,9 +188,9 @@ export async function updateActiveParlayGames(results: SyncResults) {
     where: {
       status: { not: "COMPLETED" },
       parlayGames: { some: { parlay: { status: "PENDING" } } },
-      // College football is refreshed by syncCfbSeason from its own provider;
-      // its external IDs are not TheSportsDB event IDs.
-      sport: { not: "NCAAF" },
+      // Provider-backed leagues are refreshed by syncProviderSeason; their
+      // external IDs are not TheSportsDB event IDs.
+      sport: { notIn: PROVIDER_LEAGUES },
     },
     select: { externalId: true, id: true, sport: true },
   });
@@ -224,33 +225,49 @@ export async function updateActiveParlayGames(results: SyncResults) {
 }
 
 /**
- * Division I (FBS) college football — full-season sync.
- *
- * Unlike the round-by-round leagues, the whole FBS schedule arrives in one
- * pass from a dedicated college-football provider (see lib/cfb-source.ts),
- * so every week of the season lands in the DB at once. Betting still opens
- * per the weekly window; the rest of the schedule is simply visible.
+ * Leagues whose complete schedule comes from a dedicated provider rather than
+ * TheSportsDB's round-by-round (and result-capped) endpoints.
  */
-export async function syncCfbSeason(
+export const PROVIDER_LEAGUES: LeagueKey[] = ["NFL", "NCAAF"];
+
+export function usesExternalProvider(league: LeagueKey): boolean {
+  return PROVIDER_LEAGUES.includes(league);
+}
+
+/**
+ * Full-season sync for a provider-backed league.
+ *
+ * The entire schedule — preseason, regular season and postseason — lands in
+ * one pass, so every week is visible immediately. Betting still opens per the
+ * weekly window (see lib/utils.getBettingWindow); the schedule is simply
+ * viewable ahead of time.
+ */
+export async function syncProviderSeason(
+  league: LeagueKey,
   results: SyncResults
 ): Promise<{ provider: string; fetched: number; removedStale: number }> {
-  const config = LEAGUES.NCAAF;
+  const config = LEAGUES[league];
   const season = parseInt(config.season, 10);
-  const provider = cfbProviderName();
 
-  const games = await fetchFbsSeason(season);
+  const isCfb = league === "NCAAF";
+  const provider = isCfb ? cfbProviderName() : "espn";
+  const prefix = isCfb ? cfbPrefix() : espnPrefix(league);
+
+  const games = isCfb
+    ? await fetchFbsSeason(season)
+    : await fetchEspnLeagueSeason(league, season);
+
   if (games.length === 0) {
-    results.errors.push(`NCAAF: ${provider} returned no games for ${season}`);
+    results.errors.push(`${league}: ${provider} returned no games for ${season}`);
     return { provider, fetched: 0, removedStale: 0 };
   }
 
-  // Drop NCAAF rows that came from a different provider (e.g. the old
-  // TheSportsDB import) so the same matchup can't appear twice. Anything
-  // already attached to a parlay is left untouched.
-  const prefix = provider === "cfbd" ? "cfbd-" : "espn-cfb-";
+  // Drop rows that came from a different provider (e.g. the old TheSportsDB
+  // import) so the same matchup can't appear twice. Anything already attached
+  // to a parlay is left untouched.
   const removed = await prisma.game.deleteMany({
     where: {
-      sport: "NCAAF",
+      sport: league,
       NOT: { externalId: { startsWith: prefix } },
       parlayGames: { none: {} },
     },
@@ -275,7 +292,7 @@ export async function syncCfbSeason(
           },
           create: {
             externalId: g.externalId,
-            sport: "NCAAF",
+            sport: league,
             league: config.name,
             homeTeam: g.homeTeam,
             awayTeam: g.awayTeam,
@@ -297,7 +314,7 @@ export async function syncCfbSeason(
   // Stamp completedAt once for newly finished games (drives the resolver's
   // settle delay).
   await prisma.game.updateMany({
-    where: { sport: "NCAAF", status: "COMPLETED", completedAt: null },
+    where: { sport: league, status: "COMPLETED", completedAt: null },
     data: { completedAt: new Date() },
   });
 
@@ -313,11 +330,11 @@ export async function syncAllLeagues(results: SyncResults) {
     // Golf leagues are manually seeded; skip auto-sync
     if ((LEAGUES[key] as { skipSync?: boolean }).skipSync) continue;
 
-    if (key === "NCAAF") {
+    if (usesExternalProvider(key)) {
       try {
-        await syncCfbSeason(results);
+        await syncProviderSeason(key, results);
       } catch (error) {
-        results.errors.push(`NCAAF season sync: ${String(error)}`);
+        results.errors.push(`${key} season sync: ${String(error)}`);
       }
       continue;
     }

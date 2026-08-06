@@ -23,15 +23,18 @@ const LIV_ROUND_NAMES: Record<number, string> = {
 
 const GOLF_SPORTS = new Set<LeagueKey>(["PGA", "LIV"]);
 
-// Rounds at/above this value are postseason (bowls, playoff) rather than
-// regular-season weeks. Mirrors POSTSEASON_ROUND_OFFSET in lib/cfb-source.
+// Round-number bands, mirroring the offsets in lib/espn-source.
 const POSTSEASON_ROUND = 100;
-// TheSportsDB files NFL preseason games under this round number.
 const PRESEASON_ROUND = 500;
 
 function roundLabel(sport: LeagueKey, round: number): string {
-  if (round === PRESEASON_ROUND) return "Preseason";
-  if (round >= POSTSEASON_ROUND) return "Bowls & Playoff";
+  if (round >= PRESEASON_ROUND) {
+    const week = round - PRESEASON_ROUND;
+    return week > 0 ? `Preseason Week ${week}` : "Preseason";
+  }
+  if (round >= POSTSEASON_ROUND) {
+    return sport === "NCAAF" ? "Bowls & Playoff" : "Playoffs";
+  }
   if (sport === "EPL") return `Matchweek ${round}`;
   return `Week ${round}`;
 }

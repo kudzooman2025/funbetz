@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 import {
   syncFullSeason,
-  syncCfbSeason,
+  syncProviderSeason,
+  usesExternalProvider,
   type SyncResults,
 } from "@/lib/game-sync";
 
@@ -47,9 +48,10 @@ async function handle(req: Request) {
   const results: SyncResults = { synced: 0, updated: 0, errors: [] };
 
   try {
-    if (league === "NCAAF") {
-      // College football comes from a dedicated D1/FBS provider in one pass.
-      const info = await syncCfbSeason(results);
+    if (usesExternalProvider(league)) {
+      // NFL and college football come from a dedicated, uncapped provider and
+      // load the entire season in one pass.
+      const info = await syncProviderSeason(league, results);
       return NextResponse.json({ league, ...info, ...results });
     }
 
