@@ -11,6 +11,8 @@ export interface GameResponse {
   scheduledStart: string;
   status: string;
   round: number | null;
+  /** True when the game falls inside the current betting window. */
+  bettable: boolean;
 }
 
 export interface ParlayGameResponse {

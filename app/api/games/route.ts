@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { getBettingWindow } from "@/lib/utils";
 import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
+/** Safety cap so a full multi-league season can't return an unbounded payload. */
+const MAX_GAMES = 1500;
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -27,20 +30,20 @@ export async function GET(req: Request) {
     sportFilter = requested as LeagueKey[];
   }
 
-  const previewMode = searchParams.get("preview") === "true";
+  // The FULL upcoming schedule is returned so users can see the whole season.
+  // Betting is gated separately: only games inside the current betting window
+  // are marked bettable, and POST /api/parlays re-checks the window
+  // server-side, so a locked game can never be wagered on.
   const { start, end } = getBettingWindow();
 
   const games = await prisma.game.findMany({
     where: {
       ...(sportFilter ? { sport: { in: sportFilter } } : {}),
-      ...(previewMode
-        ? {}
-        : {
-            scheduledStart: { gte: start, lte: end },
-          }),
       status: "SCHEDULED",
+      scheduledStart: { gte: new Date() },
     },
     orderBy: { scheduledStart: "asc" },
+    take: MAX_GAMES,
     select: {
       id: true,
       sport: true,
@@ -55,5 +58,13 @@ export async function GET(req: Request) {
     },
   });
 
-  return NextResponse.json({ games });
+  const withBettable = games.map((game) => ({
+    ...game,
+    bettable: game.scheduledStart >= start && game.scheduledStart <= end,
+  }));
+
+  return NextResponse.json({
+    games: withBettable,
+    window: { start: start.toISOString(), end: end.toISOString() },
+  });
 }

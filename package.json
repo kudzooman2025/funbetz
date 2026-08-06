@@ -13,7 +13,9 @@
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
     "db:seed-golf": "npx tsx prisma/seed-golf.ts",
-    "test:resolver": "tsx scripts/test-resolve-parlays.ts"
+    "test:resolver": "tsx scripts/test-resolve-parlays.ts",
+    "test:cfb": "tsx scripts/test-cfb-source.ts",
+    "test": "tsx scripts/test-resolve-parlays.ts && tsx scripts/test-cfb-source.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",

@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
-import {
-  fetchRoundEvents,
-  fetchEventById,
-  parseEventToGameData,
-  leagueKeyFromEvent,
-  delay,
-} from "@/lib/sports-api";
+import { syncAllLeagues, type SyncResults } from "@/lib/game-sync";
+
+// Full-season college football sync plus the rolling round window for other
+// leagues needs more than the default execution budget.
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   // Verify cron secret. Fail CLOSED when the env var is missing — otherwise
@@ -18,165 +14,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results = { synced: 0, updated: 0, errors: [] as string[] };
+  const results: SyncResults = { synced: 0, updated: 0, errors: [] };
 
   try {
-    // Sync all leagues with rate limiting between each
-    for (const key of LEAGUE_KEYS) {
-      // Golf leagues are manually seeded; skip auto-sync
-      if ((LEAGUES[key] as { skipSync?: boolean }).skipSync) continue;
-      await syncLeagueRounds(key, results);
-      await delay(2500);
-    }
-
-    // Also update games that are in active parlays
-    await updateActiveParlayGames(results);
+    await syncAllLeagues(results);
   } catch (error) {
     results.errors.push(String(error));
   }
 
   return NextResponse.json(results);
-}
-
-async function syncLeagueRounds(
-  league: LeagueKey,
-  results: { synced: number; updated: number; errors: string[] }
-) {
-  const config = LEAGUES[league];
-
-  // Find the current round from DB
-  const upcomingGame = await prisma.game.findFirst({
-    where: { sport: league, status: "SCHEDULED", scheduledStart: { gte: new Date() } },
-    orderBy: { round: "asc" },
-    select: { round: true },
-  });
-
-  let currentRound: number;
-  if (upcomingGame?.round) {
-    currentRound = upcomingGame.round;
-  } else {
-    // Data-driven round estimation from calendar
-    const now = new Date();
-    const seasonStart = new Date(config.seasonStart);
-    const weeksSinceStart = Math.floor(
-      (now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    currentRound = Math.max(
-      1,
-      Math.min(config.totalRounds, weeksSinceStart * config.roundsPerWeek + 1)
-    );
-  }
-
-  // High-round sports sync fewer rounds ahead to respect rate limits
-  const roundsAhead = config.totalRounds > 40 ? 1 : 3;
-  const startRound = Math.max(1, currentRound - 1);
-  const endRound = Math.min(config.totalRounds, currentRound + roundsAhead);
-
-  for (let r = startRound; r <= endRound; r++) {
-    try {
-      const events = await fetchRoundEvents(league, r);
-      await upsertEvents(events, league, results);
-      await delay(2100); // Stay under 30 req/min
-    } catch (error) {
-      results.errors.push(`${league} round ${r}: ${String(error)}`);
-    }
-  }
-
-  // Preseason: TheSportsDB stores exhibition games under a special round
-  // number (e.g. NFL preseason = round 500). Sync it until the regular
-  // season starts so August games are bettable.
-  const preseasonRound = (config as { preseasonRound?: number }).preseasonRound;
-  if (preseasonRound && new Date() < new Date(`${config.seasonStart}T00:00:00Z`)) {
-    try {
-      const events = await fetchRoundEvents(league, preseasonRound);
-      await upsertEvents(events, league, results);
-      await delay(2100);
-    } catch (error) {
-      results.errors.push(`${league} preseason: ${String(error)}`);
-    }
-  }
-}
-
-async function upsertEvents(
-  events: Awaited<ReturnType<typeof fetchRoundEvents>>,
-  league: LeagueKey,
-  results: { synced: number; updated: number; errors: string[] }
-) {
-  for (const event of events) {
-    const gameData = parseEventToGameData(event, league);
-
-    await prisma.game.upsert({
-      where: { externalId: gameData.externalId },
-      update: {
-        homeScore: gameData.homeScore,
-        awayScore: gameData.awayScore,
-        status: gameData.status,
-        homeTeamBadge: gameData.homeTeamBadge,
-        awayTeamBadge: gameData.awayTeamBadge,
-        // Refresh kickoff time + round so postponed/flexed games (common
-        // in the NFL) get corrected — the 1-hour betting lock depends on
-        // scheduledStart being accurate.
-        scheduledStart: gameData.scheduledStart,
-        round: gameData.round,
-      },
-      create: gameData,
-    });
-
-    // Set completedAt only once (first time game is marked completed)
-    if (gameData.status === "COMPLETED") {
-      await prisma.game.updateMany({
-        where: { externalId: gameData.externalId, completedAt: null },
-        data: { completedAt: new Date() },
-      });
-    }
-
-    results.synced++;
-  }
-}
-
-async function updateActiveParlayGames(
-  results: { synced: number; updated: number; errors: string[] }
-) {
-  // Find games that are in active parlays but not yet completed
-  const pendingGames = await prisma.game.findMany({
-    where: {
-      status: { not: "COMPLETED" },
-      parlayGames: {
-        some: {
-          parlay: { status: "PENDING" },
-        },
-      },
-    },
-    select: { externalId: true, id: true, sport: true },
-  });
-
-  for (const game of pendingGames) {
-    try {
-      const event = await fetchEventById(game.externalId);
-      if (!event) continue;
-
-      // Use league ID lookup, fall back to DB sport
-      const sport = leagueKeyFromEvent(event) ?? (game.sport as LeagueKey);
-      const gameData = parseEventToGameData(event, sport);
-
-      await prisma.game.update({
-        where: { id: game.id },
-        data: {
-          homeScore: gameData.homeScore,
-          awayScore: gameData.awayScore,
-          status: gameData.status,
-          completedAt: gameData.completedAt,
-          scheduledStart: gameData.scheduledStart,
-          round: gameData.round,
-        },
-      });
-
-      results.updated++;
-      await delay(2100);
-    } catch (error) {
-      results.errors.push(`Game ${game.externalId}: ${String(error)}`);
-    }
-  }
 }
 
 // Also allow GET for easy browser testing

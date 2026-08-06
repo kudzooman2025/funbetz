@@ -27,6 +27,7 @@ export default function AdminPage() {
 
   const [log, setLog] = useState<string[]>([]);
   const [resolvingParlays, setResolvingParlays] = useState(false);
+  const [backfilling, setBackfilling] = useState<string | null>(null);
 
   // Users management
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -107,6 +108,31 @@ export default function AdminPage() {
     setUserAction(null);
   }
 
+  // ── Season backfill ────────────────────────────────────────────────────────
+  async function handleBackfill(league: string, label: string) {
+    setBackfilling(league);
+    addLog(`Loading full ${label} season\u2026`);
+    try {
+      const res = await fetch(`/api/cron/backfill-season?league=${league}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        addLog(
+          `${label}: ${data.synced} games loaded` +
+            (data.provider ? ` via ${data.provider}` : "") +
+            (data.removedStale ? ` | ${data.removedStale} stale removed` : "") +
+            (data.errors?.length ? ` | Errors: ${data.errors.join(", ")}` : "")
+        );
+      } else {
+        addLog(`${label} backfill failed: ${data.error || "unknown error"}`);
+      }
+    } catch (err) {
+      addLog(`Error: ${String(err)}`);
+    }
+    setBackfilling(null);
+  }
+
   // ── Resolve Parlays ────────────────────────────────────────────────────────
   async function handleResolveParlays() {
     setResolvingParlays(true);
@@ -161,6 +187,20 @@ export default function AdminPage() {
           className="px-4 py-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
         >
           {resolvingParlays ? "Resolving…" : "💰 Resolve Parlays"}
+        </button>
+        <button
+          onClick={() => handleBackfill("NCAAF", "College Football")}
+          disabled={backfilling !== null}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {backfilling === "NCAAF" ? "Loading…" : "🏈 Load CFB Season"}
+        </button>
+        <button
+          onClick={() => handleBackfill("NFL", "NFL")}
+          disabled={backfilling !== null}
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {backfilling === "NFL" ? "Loading…" : "🏈 Load NFL Season"}
         </button>
       </div>
 

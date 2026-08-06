@@ -23,6 +23,29 @@ const LIV_ROUND_NAMES: Record<number, string> = {
 
 const GOLF_SPORTS = new Set<LeagueKey>(["PGA", "LIV"]);
 
+// Rounds at/above this value are postseason (bowls, playoff) rather than
+// regular-season weeks. Mirrors POSTSEASON_ROUND_OFFSET in lib/cfb-source.
+const POSTSEASON_ROUND = 100;
+// TheSportsDB files NFL preseason games under this round number.
+const PRESEASON_ROUND = 500;
+
+function roundLabel(sport: LeagueKey, round: number): string {
+  if (round === PRESEASON_ROUND) return "Preseason";
+  if (round >= POSTSEASON_ROUND) return "Bowls & Playoff";
+  if (sport === "EPL") return `Matchweek ${round}`;
+  return `Week ${round}`;
+}
+
+function groupByRound(games: GameResponse[]): Record<number, GameResponse[]> {
+  const byRound: Record<number, GameResponse[]> = {};
+  for (const game of games) {
+    const r = game.round ?? 0;
+    if (!byRound[r]) byRound[r] = [];
+    byRound[r].push(game);
+  }
+  return byRound;
+}
+
 
 export default function GamesPage() {
   return (
@@ -53,6 +76,9 @@ function GamesContent() {
   const [error, setError] = useState("");
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showBrokePopup, setShowBrokePopup] = useState(false);
+  // Weeks outside the betting window start collapsed so a full season stays
+  // scannable; the user can open any of them.
+  const [expandedRounds, setExpandedRounds] = useState<Record<string, boolean>>({});
 
   const { selectedGames, addGame, removeGame } = useTicketStore();
 
@@ -146,7 +172,7 @@ function GamesContent() {
             No upcoming games available right now.
           </p>
           <p className="text-brand-muted text-sm mt-2">
-            Games appear when they&apos;re scheduled within the current betting window.
+            The full schedule appears here as soon as it&apos;s published.
           </p>
         </div>
       ) : isGolfOnly ? (
@@ -189,7 +215,7 @@ function GamesContent() {
                                 isSelected={isSelected}
                                 selectedPick={selectedPick}
                                 disabled={atMax}
-                                bettable={true}
+                                bettable={game.bettable}
                                 isGolf={true}
                                 onPickHome={() => {
                                   if (isSelected && selectedPick === game.homeTeam) {
@@ -220,10 +246,16 @@ function GamesContent() {
           })}
         </div>
       ) : (
-        /* ── All other sports: existing layout grouped by sport ── */
-        <div className="space-y-6">
+        /* ── All other sports: full schedule grouped by league, then week ── */
+        <div className="space-y-8">
           {Object.entries(gamesBySport).map(([sport, sportGames]) => {
             const config = LEAGUES[sport as LeagueKey];
+            const byRound = groupByRound(sportGames);
+            const roundKeys = Object.keys(byRound)
+              .map(Number)
+              .sort((a, b) => a - b);
+            const showRoundHeaders = roundKeys.length > 1;
+
             return (
               <div key={sport}>
                 {Object.keys(gamesBySport).length > 1 && (
@@ -235,61 +267,107 @@ function GamesContent() {
                     </span>
                   </div>
                 )}
-                <div className="space-y-2">
-                  {sportGames.map((game) => {
-                    const isSelected = selectedGames.some(
-                      (g) => g.gameId === game.id
-                    );
-                    const selectedPick = selectedGames.find(
-                      (g) => g.gameId === game.id
-                    )?.pickedTeam;
-                    const atMax = selectedCount >= MAX_PARLAY_GAMES && !isSelected;
+
+                <div className="space-y-4">
+                  {roundKeys.map((roundNum) => {
+                    const roundGames = byRound[roundNum];
+                    const openCount = roundGames.filter((g) => g.bettable).length;
+                    const key = `${sport}-${roundNum}`;
+                    // Open weeks expand by default; locked weeks collapse.
+                    const isOpen = expandedRounds[key] ?? openCount > 0;
 
                     return (
-                      <GameRow
-                        key={game.id}
-                        game={game}
-                        isSelected={isSelected}
-                        selectedPick={selectedPick}
-                        disabled={atMax}
-                        bettable={true}
-                        onPickHome={() => {
-                          if (isSelected && selectedPick === game.homeTeam) {
-                            removeGame(game.id);
-                          } else {
-                            if (isSelected) removeGame(game.id);
-                            addGame(
-                              {
-                                gameId: game.id,
-                                homeTeam: game.homeTeam,
-                                awayTeam: game.awayTeam,
-                                homeTeamBadge: game.homeTeamBadge,
-                                awayTeamBadge: game.awayTeamBadge,
-                                scheduledStart: game.scheduledStart,
-                              },
-                              game.homeTeam
-                            );
-                          }
-                        }}
-                        onPickAway={() => {
-                          if (isSelected && selectedPick === game.awayTeam) {
-                            removeGame(game.id);
-                          } else {
-                            if (isSelected) removeGame(game.id);
-                            addGame(
-                              {
-                                gameId: game.id,
-                                homeTeam: game.homeTeam,
-                                awayTeam: game.awayTeam,
-                                homeTeamBadge: game.homeTeamBadge,
-                                awayTeamBadge: game.awayTeamBadge,
-                                scheduledStart: game.scheduledStart,
-                              },
-                              game.awayTeam
-                            );
-                          }
-                        }}
-                      />
+                      <div key={roundNum}>
+                        {showRoundHeaders && (
+                          <button
+                            onClick={() =>
+                              setExpandedRounds((prev) => ({ ...prev, [key]: !isOpen }))
+                            }
+                            className="w-full flex items-center gap-3 mb-2 text-left"
+                          >
+                            <span className="text-brand-muted text-xs w-3 shrink-0">
+                              {isOpen ? "\u25BE" : "\u25B8"}
+                            </span>
+                            <h3 className="text-sm font-bold text-white">
+                              {roundLabel(sport as LeagueKey, roundNum)}
+                            </h3>
+                            <span className="text-brand-muted text-xs">
+                              {roundGames.length} game{roundGames.length !== 1 ? "s" : ""}
+                            </span>
+                            {openCount > 0 ? (
+                              <span className="text-xs bg-brand-green/20 text-brand-green border border-brand-green/30 rounded-full px-2 py-0.5">
+                                {openCount} open for picks
+                              </span>
+                            ) : (
+                              <span className="text-xs text-brand-muted border border-brand-border rounded-full px-2 py-0.5">
+                                &#128274; Picks not open yet
+                              </span>
+                            )}
+                          </button>
+                        )}
+
+                        {(isOpen || !showRoundHeaders) && (
+                          <div className="space-y-2">
+                            {roundGames.map((game) => {
+                              const isSelected = selectedGames.some(
+                                (g) => g.gameId === game.id
+                              );
+                              const selectedPick = selectedGames.find(
+                                (g) => g.gameId === game.id
+                              )?.pickedTeam;
+                              const atMax =
+                                selectedCount >= MAX_PARLAY_GAMES && !isSelected;
+
+                              return (
+                                <GameRow
+                                  key={game.id}
+                                  game={game}
+                                  isSelected={isSelected}
+                                  selectedPick={selectedPick}
+                                  disabled={atMax}
+                                  bettable={game.bettable}
+                                onPickHome={() => {
+                                  if (isSelected && selectedPick === game.homeTeam) {
+                                    removeGame(game.id);
+                                  } else {
+                                    if (isSelected) removeGame(game.id);
+                                    addGame(
+                                      {
+                                        gameId: game.id,
+                                        homeTeam: game.homeTeam,
+                                        awayTeam: game.awayTeam,
+                                        homeTeamBadge: game.homeTeamBadge,
+                                        awayTeamBadge: game.awayTeamBadge,
+                                        scheduledStart: game.scheduledStart,
+                                      },
+                                      game.homeTeam
+                                    );
+                                  }
+                                }}
+                                onPickAway={() => {
+                                  if (isSelected && selectedPick === game.awayTeam) {
+                                    removeGame(game.id);
+                                  } else {
+                                    if (isSelected) removeGame(game.id);
+                                    addGame(
+                                      {
+                                        gameId: game.id,
+                                        homeTeam: game.homeTeam,
+                                        awayTeam: game.awayTeam,
+                                        homeTeamBadge: game.homeTeamBadge,
+                                        awayTeamBadge: game.awayTeamBadge,
+                                        scheduledStart: game.scheduledStart,
+                                      },
+                                      game.awayTeam
+                                    );
+                                  }
+                                }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -298,7 +376,6 @@ function GamesContent() {
           })}
         </div>
       )}
-
       {/* Floating ticket summary */}
       {selectedCount > 0 && (
         <div className="fixed bottom-16 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-brand-card border border-brand-green rounded-lg p-4 shadow-lg shadow-brand-green/10 z-40">
