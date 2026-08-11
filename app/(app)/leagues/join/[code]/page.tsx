@@ -39,12 +39,7 @@ export default function JoinLeaguePage({
       });
       const data = await res.json();
 
-      if (res.ok && data.tournament?.id) {
-        router.push(`/leagues/${data.tournament.id}`);
-        return;
-      }
-
-      // Already a member is a success case from the visitor's point of view.
+      // Joining, or already a member — either way, open the league.
       if (data.tournament?.id) {
         router.push(`/leagues/${data.tournament.id}`);
         return;

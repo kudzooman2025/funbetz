@@ -29,12 +29,12 @@ export async function GET(
   });
 
   if (!tournament) {
-    return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+    return NextResponse.json({ error: "League not found." }, { status: 404 });
   }
 
   const isMember = tournament.members.some((m) => m.userId === userId);
   if (!isMember) {
-    return NextResponse.json({ error: "You are not a member of this tournament." }, { status: 403 });
+    return NextResponse.json({ error: "You are not a member of this league." }, { status: 403 });
   }
 
   return NextResponse.json({
@@ -74,10 +74,10 @@ export async function DELETE(
 
   const tournament = await prisma.tournament.findUnique({ where: { id } });
   if (!tournament) {
-    return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+    return NextResponse.json({ error: "League not found." }, { status: 404 });
   }
   if (tournament.createdById !== userId) {
-    return NextResponse.json({ error: "Only the creator can cancel a tournament." }, { status: 403 });
+    return NextResponse.json({ error: "Only the creator can cancel a league." }, { status: 403 });
   }
 
   await prisma.tournament.update({

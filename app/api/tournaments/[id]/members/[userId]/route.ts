@@ -20,20 +20,20 @@ export async function DELETE(
   });
 
   if (!tournament) {
-    return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+    return NextResponse.json({ error: "League not found." }, { status: 404 });
   }
   if (tournament.createdById !== requesterId) {
     return NextResponse.json({ error: "Only the creator can remove members." }, { status: 403 });
   }
   if (targetUserId === tournament.createdById) {
-    return NextResponse.json({ error: "Cannot remove the tournament creator." }, { status: 400 });
+    return NextResponse.json({ error: "Cannot remove the league creator." }, { status: 400 });
   }
 
   const membership = await prisma.tournamentMember.findUnique({
     where: { tournamentId_userId: { tournamentId, userId: targetUserId } },
   });
   if (!membership) {
-    return NextResponse.json({ error: "User is not a member of this tournament." }, { status: 404 });
+    return NextResponse.json({ error: "User is not a member of this league." }, { status: 404 });
   }
 
   await prisma.tournamentMember.delete({

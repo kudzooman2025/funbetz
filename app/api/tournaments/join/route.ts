@@ -38,16 +38,22 @@ export async function POST(req: Request) {
   }
 
   if (tournament.status !== "ACTIVE") {
-    return NextResponse.json({ error: "This tournament is no longer active." }, { status: 400 });
+    return NextResponse.json({ error: "This league is no longer active." }, { status: 400 });
   }
 
   const alreadyMember = tournament.members.some((m) => m.userId === userId);
   if (alreadyMember) {
-    return NextResponse.json({ error: "You are already a member of this tournament." }, { status: 400 });
+    // Include the id so an invite link clicked twice just opens the league
+    // instead of dead-ending on an error.
+    return NextResponse.json({
+      error: "You are already a member of this league.",
+      alreadyMember: true,
+      tournament: { id: tournament.id, name: tournament.name },
+    });
   }
 
   if (tournament.members.length >= MAX_MEMBERS_PER_TOURNAMENT) {
-    return NextResponse.json({ error: "This tournament has reached its maximum capacity." }, { status: 400 });
+    return NextResponse.json({ error: "This league has reached its maximum capacity." }, { status: 400 });
   }
 
   await prisma.tournamentMember.create({

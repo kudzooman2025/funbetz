@@ -20,7 +20,7 @@ export async function POST(
   });
 
   if (!tournament) {
-    return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+    return NextResponse.json({ error: "League not found." }, { status: 404 });
   }
   if (tournament.createdById === userId) {
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(
     where: { tournamentId_userId: { tournamentId, userId } },
   });
   if (!membership) {
-    return NextResponse.json({ error: "You are not a member of this tournament." }, { status: 404 });
+    return NextResponse.json({ error: "You are not a member of this league." }, { status: 404 });
   }
 
   await prisma.tournamentMember.delete({
