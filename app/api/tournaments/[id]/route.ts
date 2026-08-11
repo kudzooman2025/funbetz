@@ -49,6 +49,9 @@ export async function GET(
       description: tournament.description,
       createdAt: tournament.createdAt,
       sports: tournament.sports.map((s) => s.sport),
+      // The detail page renders a member count in the header and the tab
+      // label, so send it explicitly rather than making the client derive it.
+      memberCount: tournament.members.length,
       members: tournament.members.map((m) => ({
         userId: m.userId,
         username: m.user.username,
