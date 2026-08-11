@@ -60,6 +60,10 @@ model User {
 
   isAdmin Boolean @default(false) @map("is_admin")
 
+  /// Opt-in: when true, league-mates can see this user's parlay cards.
+  /// Off by default — sharing your picks is always the user's choice.
+  shareParlays Boolean @default(false) @map("share_parlays")
+
   leaderboardScore      LeaderboardScore?
   parlays               Parlay[]
   tournamentsCreated    Tournament[]

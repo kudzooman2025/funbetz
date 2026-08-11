@@ -6,8 +6,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { TournamentDetail, TournamentLeaderboardEntry } from "@/lib/types";
 import { LEAGUES } from "@/lib/constants";
+import { LeagueCards } from "@/components/leagues/league-cards";
 
-type Tab = "leaderboard" | "members" | "info";
+type Tab = "leaderboard" | "cards" | "members" | "info";
 
 export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -218,7 +219,7 @@ export default function TournamentDetailPage() {
 
       {/* Tabs */}
       <div className="flex border-b border-brand-border mb-5 gap-0">
-        {(["leaderboard", "members", "info"] as Tab[]).map((t) => (
+        {(["leaderboard", "cards", "members", "info"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -288,6 +289,8 @@ export default function TournamentDetailPage() {
       )}
 
       {/* Members tab */}
+      {tab === "cards" && <LeagueCards leagueId={tournament.id} />}
+
       {tab === "members" && (
         <div className="space-y-2">
           {tournament.members.map((m) => (
