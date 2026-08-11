@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Preserve an invite destination across signup -> login.
+  const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +40,11 @@ export function RegisterForm() {
         return;
       }
 
-      router.push("/login?registered=true");
+      router.push(
+        callbackUrl?.startsWith("/")
+          ? `/login?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
+          : "/login?registered=true"
+      );
     } catch {
       setError("Something went wrong");
     } finally {

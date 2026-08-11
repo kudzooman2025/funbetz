@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Where to land after signing in — used by shareable league invite links.
+  const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +30,7 @@ export function LoginForm() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/dashboard");
+        router.push(callbackUrl?.startsWith("/") ? callbackUrl : "/dashboard");
         router.refresh();
       }
     } catch {

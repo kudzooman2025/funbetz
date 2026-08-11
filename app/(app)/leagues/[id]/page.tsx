@@ -20,6 +20,7 @@ export default function TournamentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [lbLoading, setLbLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [actionError, setActionError] = useState("");
 
   const loadTournament = useCallback(async () => {
@@ -58,6 +59,15 @@ export default function TournamentDetailPage() {
   useEffect(() => {
     if (tab === "leaderboard") loadLeaderboard();
   }, [tab, loadLeaderboard]);
+
+  function copyInviteLink() {
+    if (!tournament) return;
+    const link = `${window.location.origin}/leagues/join/${tournament.inviteCode}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  }
 
   function copyInviteCode() {
     if (!tournament) return;
@@ -175,6 +185,14 @@ export default function TournamentDetailPage() {
             ))}
           </div>
         )}
+
+        {/* Shareable invite link — the easiest thing to text a friend */}
+        <button
+          onClick={copyInviteLink}
+          className="w-full mb-3 px-4 py-2.5 bg-brand-green text-brand-dark font-bold text-sm rounded-lg hover:bg-green-400 transition-colors"
+        >
+          {copiedLink ? "Invite link copied!" : "🔗 Copy invite link"}
+        </button>
 
         {/* Invite code */}
         <div className="mt-4 flex items-center gap-2">
