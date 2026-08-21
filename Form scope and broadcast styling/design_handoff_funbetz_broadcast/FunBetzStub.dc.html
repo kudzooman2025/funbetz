@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #101315; }
+  ::-webkit-scrollbar-thumb { background: #2C3439; border-radius: 3px; }
+  @keyframes fbLed2 { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  @keyframes fbStubIn { from { opacity: 0; transform: translateY(8px) rotate(-.4deg); } to { opacity: 1; transform: rotate(-.4deg); } }
+  @keyframes fbFlip2 { 0% { transform: rotateX(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @keyframes fbRise2 { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: #101315; color: #EDF1F2; font-family: 'IBM Plex Sans', system-ui, sans-serif; overflow: hidden; position: relative;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: #0B0E0F;">
+    <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 24px; letter-spacing: .1em; text-transform: uppercase; line-height: 1;">
+      <span style="color: #EDF1F2;">FUN</span><span style="color: #FFC53D;">BETZ</span>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A979E;">
+      <span style="letter-spacing: .1em;">BAL</span>
+      <span style="font-weight: 600; font-size: 15px; color: #EDF1F2;">{{ wallet }}</span>
+    </div>
+  </div>
+
+  <div style="padding: 10px 14px 11px; background: #14181B; border-top: 1px solid #232A2E; border-bottom: 1px solid #232A2E;">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 7px;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #FFC53D; animation: fbLed2 1.6s ease-in-out infinite;"></span>
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: #FFC53D;">window closes</span>
+      </div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 26px; line-height: 1; color: #EDF1F2; letter-spacing: -.01em;">{{ clock }}</div>
+    </div>
+    <div style="height: 3px; background: #20262A; margin-top: 9px; display: flex;">
+      <div style="width: 62%; background: #FFC53D;"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #6E7C82;">
+      <span>Opened Mon 9:00 AM</span>
+      <span>Preseason Wk 2</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 0 96px;">
+
+    <sc-if value="{{ isGames }}" hint-placeholder-val="{{ true }}">
+      <div style="padding: 12px 14px 0;">
+        <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 12px;">
+          <sc-for list="{{ leagueChips }}" as="chip" hint-placeholder-count="4">
+            <div>
+              <sc-if value="{{ chip.on }}">
+                <button onClick="{{ chip.select }}" style="flex: none; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #FFC53D; background: #FFC53D; color: #0B0E0F; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; white-space: nowrap;">{{ chip.label }}</button>
+              </sc-if>
+              <sc-if value="{{ chip.off }}">
+                <button onClick="{{ chip.select }}" style="flex: none; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #2C3439; background: transparent; color: #8A979E; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; white-space: nowrap;">{{ chip.label }}</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: baseline; gap: 8px; padding-bottom: 9px; border-bottom: 1px solid #232A2E;">
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .06em; text-transform: uppercase;">Open now</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #FFC53D;">6 games</span>
+          <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6E7C82;">AUG 21–23</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 7px; padding-top: 10px;">
+          <sc-for list="{{ games }}" as="g" hint-placeholder-count="6">
+            <div style="background: #171B1E; border: 1px solid #232A2E; border-radius: 4px; padding: 9px 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .06em; color: #8A979E;">{{ g.slot }}</span>
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #4F5A5F;">{{ g.net }}</span>
+              </div>
+              <div style="display: flex; align-items: stretch; gap: 7px;">
+                <sc-if value="{{ g.awayOn }}">
+                  <button onClick="{{ g.pickAway }}" style="flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid #FFC53D; border-radius: 3px; background: rgba(255,197,61,.16); color: #FFC53D; cursor: pointer; text-align: left;">
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; line-height: 1; letter-spacing: .04em;">{{ g.away.ab }}</span>
+                    <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; opacity: .85; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ g.away.n }}</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ g.awayOff }}">
+                  <button onClick="{{ g.pickAway }}" style="flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid #2C3439; border-radius: 3px; background: #14181B; color: #C7D0D4; cursor: pointer; text-align: left;" style-hover="border-color: #4F5A5F;">
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; line-height: 1; letter-spacing: .04em;">{{ g.away.ab }}</span>
+                    <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; color: #6E7C82; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ g.away.n }}</span>
+                  </button>
+                </sc-if>
+                <div style="display: flex; align-items: center; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: .1em; color: #4F5A5F;">AT</div>
+                <sc-if value="{{ g.homeOn }}">
+                  <button onClick="{{ g.pickHome }}" style="flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid #FFC53D; border-radius: 3px; background: rgba(255,197,61,.16); color: #FFC53D; cursor: pointer; text-align: left;">
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; line-height: 1; letter-spacing: .04em;">{{ g.home.ab }}</span>
+                    <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; opacity: .85; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ g.home.n }}</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ g.homeOff }}">
+                  <button onClick="{{ g.pickHome }}" style="flex: 1; min-width: 0; min-height: 52px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 9px; border: 1px solid #2C3439; border-radius: 3px; background: #14181B; color: #C7D0D4; cursor: pointer; text-align: left;" style-hover="border-color: #4F5A5F;">
+                    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; line-height: 1; letter-spacing: .04em;">{{ g.home.ab }}</span>
+                    <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; color: #6E7C82; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ g.home.n }}</span>
+                  </button>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: baseline; gap: 8px; padding: 20px 0 9px; border-bottom: 1px solid #232A2E;">
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; color: #6E7C82;">Preseason Wk 3</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4F5A5F;">opens Fri 9:00 AM</span>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{ locked }}" as="l" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 11px 2px; border-bottom: 1px solid #1A1F22;">
+              <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; color: #6E7C82; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.matchup }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4F5A5F;">{{ l.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTicket }}">
+      <div style="padding: 18px 14px;">
+        <sc-if value="{{ notPlaced }}">
+          <div>
+            <div style="position: relative; background: #F4F1E8; color: #14181B; border-radius: 3px; padding: 16px 16px 18px; animation: fbStubIn .35s ease both; box-shadow: 0 14px 34px rgba(0,0,0,.5);">
+              <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #101315; top: 50%; left: -11px; transform: translateY(-50%);"></div>
+              <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #101315; top: 50%; right: -11px; transform: translateY(-50%);"></div>
+              <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px solid #14181B;">
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: .12em; text-transform: uppercase;">Parlay stub</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5A5F54;">#{{ ticketNo }}</span>
+              </div>
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{ legs }}" as="leg" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dashed #B9B4A4;">
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8474; width: 16px;">{{ leg.no }}</span>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: .04em; text-transform: uppercase;">{{ leg.team }}</div>
+                      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6B675B; margin-top: 1px;">{{ leg.sub }}</div>
+                    </div>
+                    <button onClick="{{ leg.remove }}" style="border: 1px solid #B9B4A4; background: transparent; color: #6B675B; border-radius: 2px; width: 24px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1;">×</button>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 11px;">
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: .18em; text-transform: uppercase; color: #6B675B;">Multiplier</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 22px;">{{ multText }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: .18em; text-transform: uppercase; color: #6B675B;">Stake</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 22px;">{{ stake }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 12px; border-top: 2px solid #14181B;">
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .18em; text-transform: uppercase;">To win</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 38px; line-height: 1;">{{ payout }}</span>
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8A8474; margin-top: 8px; letter-spacing: .04em;">PLAY MONEY ONLY · SETTLES SUN 11:59 PM ET</div>
+            </div>
+
+            <div style="margin-top: 16px;">
+              <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #8A979E; margin-bottom: 8px;">Set stake</div>
+              <div style="display: flex; gap: 6px;">
+                <sc-for list="{{ quick }}" as="q" hint-placeholder-count="5">
+                  <div style="flex: 1;">
+                    <sc-if value="{{ q.on }}">
+                      <button onClick="{{ q.set }}" style="width: 100%; min-height: 44px; border: 1px solid #FFC53D; background: rgba(255,197,61,.16); color: #FFC53D; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; cursor: pointer;">{{ q.label }}</button>
+                    </sc-if>
+                    <sc-if value="{{ q.off }}">
+                      <button onClick="{{ q.set }}" style="width: 100%; min-height: 44px; border: 1px solid #2C3439; background: #171B1E; color: #8A979E; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; cursor: pointer;">{{ q.label }}</button>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <button onClick="{{ place }}" style="margin-top: 12px; width: 100%; min-height: 52px; border: 0; border-radius: 3px; background: #FFC53D; color: #0B0E0F; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;">Print my stub</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ placed }}">
+          <div style="padding: 40px 8px; text-align: center; animation: fbRise2 .4s ease both;">
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: .05em; text-transform: uppercase; line-height: 1;">Stub printed</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A979E; margin-top: 8px;">#{{ ticketNo }} · {{ mathLine }}</div>
+            <button onClick="{{ goLeagues }}" style="margin-top: 24px; min-height: 44px; padding: 0 18px; border: 1px solid #FFC53D; background: transparent; color: #FFC53D; border-radius: 3px; font-family: 'Barlow Condensed', sans-serif; font-size: 17px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;">Share to league</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isLeagues }}">
+      <div style="padding: 16px 14px;">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+          <div>
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 27px; letter-spacing: .05em; text-transform: uppercase; line-height: 1;">Sunday Crew</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6E7C82; margin-top: 5px;">8 members · wk 2 of 18</div>
+          </div>
+          <button onClick="{{ resolve }}" style="min-height: 34px; padding: 0 12px; border: 1px solid #2C3439; background: transparent; color: #FFC53D; border-radius: 3px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;">{{ resolveLabel }}</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; margin-top: 14px; border-top: 1px solid #232A2E;">
+          <sc-for list="{{ leagueCards }}" as="c" hint-placeholder-count="4">
+            <div style="padding: 12px 0; border-bottom: 1px solid #232A2E;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 28px; height: 28px; border-radius: 2px; background: #20262A; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: #8A979E;">{{ c.initial }}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 13px;">{{ c.user }}</div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6E7C82; margin-top: 2px;">{{ c.meta }}</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 17px;">{{ c.amount }}</div>
+                  <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6E7C82;">{{ c.amountLabel }}</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 5px; margin-top: 9px;">
+                <sc-for list="{{ c.legs }}" as="leg" hint-placeholder-count="4">
+                  <div style="flex: 1;">
+                    <sc-if value="{{ leg.won }}">
+                      <div style="height: 24px; border-bottom: 2px solid #B4F03C; color: #B4F03C; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .08em; animation: fbFlip2 .45s ease both;">{{ leg.ab }}</div>
+                    </sc-if>
+                    <sc-if value="{{ leg.lost }}">
+                      <div style="height: 24px; border-bottom: 2px solid #FF6B5E; color: #FF6B5E; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .08em; text-decoration: line-through; animation: fbFlip2 .45s ease both;">{{ leg.ab }}</div>
+                    </sc-if>
+                    <sc-if value="{{ leg.pending }}">
+                      <div style="height: 24px; border-bottom: 2px solid #2C3439; color: #6E7C82; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .08em;">{{ leg.ab }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isRanks }}">
+      <div style="padding: 16px 14px;">
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 27px; letter-spacing: .05em; text-transform: uppercase; line-height: 1;">Standings</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6E7C82; margin-top: 5px;">All players · season to date</div>
+        <div style="display: flex; flex-direction: column; margin-top: 14px; border-top: 2px solid #232A2E;">
+          <sc-for list="{{ ranks }}" as="r" hint-placeholder-count="8">
+            <div>
+              <sc-if value="{{ r.me }}">
+                <div style="display: flex; align-items: baseline; gap: 12px; padding: 12px 8px; background: rgba(255,197,61,.08); border-bottom: 1px solid #232A2E;">
+                  <span style="width: 24px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; color: #FFC53D;">{{ r.rank }}</span>
+                  <span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', sans-serif; font-weight: 600; font-size: 13px; color: #FFC53D; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.user }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A979E;">{{ r.wl }}</span>
+                  <span style="width: 62px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; color: #FFC53D;">{{ r.betz }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.other }}">
+                <div style="display: flex; align-items: baseline; gap: 12px; padding: 12px 8px; border-bottom: 1px solid #1A1F22;">
+                  <span style="width: 24px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; color: #4F5A5F;">{{ r.rank }}</span>
+                  <span style="flex: 1; min-width: 0; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: #C7D0D4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.user }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6E7C82;">{{ r.wl }}</span>
+                  <span style="width: 62px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #EDF1F2;">{{ r.betz }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ showBar }}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 60px; display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: #0B0E0F; border-top: 1px solid #FFC53D;">
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 19px; letter-spacing: .08em; text-transform: uppercase; color: #FFC53D;">{{ barTitle }}</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #8A979E; margin-top: 2px;">{{ barSub }}</div>
+      </div>
+      <sc-if value="{{ canBuild }}">
+        <button onClick="{{ goTicket }}" style="min-height: 42px; padding: 0 16px; border: 0; border-radius: 3px; background: #FFC53D; color: #0B0E0F; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;">Review stub</button>
+      </sc-if>
+      <sc-if value="{{ cannotBuild }}">
+        <span style="min-height: 42px; display: flex; align-items: center; padding: 0 16px; border-radius: 3px; background: #20262A; color: #6E7C82; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .12em; text-transform: uppercase;">Review stub</span>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <div style="display: flex; align-items: stretch; background: #0B0E0F; border-top: 1px solid #232A2E;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <div style="flex: 1;">
+        <sc-if value="{{ t.on }}">
+          <button onClick="{{ t.go }}" style="width: 100%; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: #FFC53D; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;">
+            <span>{{ t.label }}</span>
+            <span style="width: 18px; height: 2px; background: #FFC53D;"></span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ t.off }}">
+          <button onClick="{{ t.go }}" style="width: 100%; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: #6E7C82; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;">
+            <span>{{ t.label }}</span>
+            <span style="width: 18px; height: 2px; background: transparent;"></span>
+          </button>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+const GAMES = [
+  { id: "g1", slot: "FRI 8:00 PM ET", net: "NFLN", away: { n: "Detroit Lions", ab: "DET" }, home: { n: "Kansas City Chiefs", ab: "KC" } },
+  { id: "g2", slot: "SAT 1:00 PM ET", net: "LOCAL", away: { n: "Cleveland Browns", ab: "CLE" }, home: { n: "Philadelphia Eagles", ab: "PHI" } },
+  { id: "g3", slot: "SAT 7:00 PM ET", net: "NFLN", away: { n: "Dallas Cowboys", ab: "DAL" }, home: { n: "Baltimore Ravens", ab: "BAL" } },
+  { id: "g4", slot: "SAT 10:00 PM ET", net: "LOCAL", away: { n: "Las Vegas Raiders", ab: "LV" }, home: { n: "San Francisco 49ers", ab: "SF" } },
+  { id: "g5", slot: "SUN 4:00 PM ET", net: "LOCAL", away: { n: "Chicago Bears", ab: "CHI" }, home: { n: "Buffalo Bills", ab: "BUF" } },
+  { id: "g6", slot: "SUN 8:00 PM ET", net: "NFLN", away: { n: "Seattle Seahawks", ab: "SEA" }, home: { n: "Green Bay Packers", ab: "GB" } },
+];
+const LOCKED = [
+  { matchup: "Titans vs Vikings", date: "AUG 28" },
+  { matchup: "Jets vs Giants", date: "AUG 29" },
+  { matchup: "Rams vs Chargers", date: "AUG 30" },
+];
+const MULTIPLIERS = { 3: 5, 4: 10, 5: 20, 6: 40, 7: 80, 8: 150 };
+const CARDS = [
+  { user: "@maddogsteve", initial: "M", legs: ["KC", "BAL", "SF", "GB"], mult: "10x", stake: 100, outcome: ["won", "won", "won", "won"] },
+  { user: "@tessa.p", initial: "T", legs: ["DET", "PHI", "BUF"], mult: "5x", stake: 250, outcome: ["won", "lost", "won"] },
+  { user: "@rico", initial: "R", legs: ["CLE", "DAL", "SEA", "BUF", "KC"], mult: "20x", stake: 50, outcome: ["lost", "won", "won", "won", "won"] },
+  { user: "@bigmike88", initial: "B", legs: ["KC", "PHI", "SF"], mult: "5x", stake: 75, outcome: ["won", "won", "won"] },
+];
+const RANKS = [
+  { user: "@maddogsteve", wl: "9-3", betz: "4,180" },
+  { user: "@tessa.p", wl: "8-4", betz: "3,640" },
+  { user: "@rico", wl: "7-4", betz: "2,910" },
+  { user: "kudzoo (you)", wl: "6-5", betz: "1,240", me: true },
+  { user: "@bigmike88", wl: "5-6", betz: "980" },
+  { user: "@jparker", wl: "4-7", betz: "610" },
+  { user: "@sunday.dave", wl: "3-8", betz: "425" },
+  { user: "@nlopez", wl: "2-9", betz: "180" },
+];
+
+class Component extends DCLogic {
+  state = { tab: "games", picks: {}, stake: 50, placed: false, resolved: false, league: "NFL", secs: 2 * 3600 + 14 * 60 + 6 };
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState(s => ({ secs: Math.max(0, s.secs - 1) })), 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  pick(id, side) {
+    this.setState(s => {
+      const picks = { ...s.picks };
+      if (picks[id] === side) delete picks[id];
+      else if (Object.keys(picks).length >= 8 && !picks[id]) return {};
+      else picks[id] = side;
+      return { picks };
+    });
+  }
+  pad(n) { return String(n).padStart(2, "0"); }
+
+  renderVals() {
+    const { tab, picks, stake, placed, resolved, league, secs } = this.state;
+    const ids = Object.keys(picks);
+    const count = ids.length;
+    const mult = MULTIPLIERS[count] || 0;
+
+    return {
+      wallet: "1,240",
+      clock: this.pad(Math.floor(secs / 3600)) + ":" + this.pad(Math.floor((secs % 3600) / 60)) + ":" + this.pad(secs % 60),
+      ticketNo: "8B24-0219",
+
+      isGames: tab === "games", isTicket: tab === "ticket", isLeagues: tab === "leagues", isRanks: tab === "ranks",
+
+      leagueChips: ["NFL", "NCAAF", "EPL", "GOLF"].map(l => ({
+        label: l, on: league === l, off: league !== l,
+        select: () => this.setState({ league: l }),
+      })),
+
+      games: GAMES.map(g => ({
+        ...g,
+        awayOn: picks[g.id] === "away", awayOff: picks[g.id] !== "away",
+        homeOn: picks[g.id] === "home", homeOff: picks[g.id] !== "home",
+        pickAway: () => this.pick(g.id, "away"),
+        pickHome: () => this.pick(g.id, "home"),
+      })),
+      locked: LOCKED,
+
+      legs: ids.map((id, i) => {
+        const g = GAMES.find(x => x.id === id);
+        const side = picks[id] === "away" ? g.away : g.home;
+        const other = picks[id] === "away" ? g.home : g.away;
+        return {
+          no: this.pad(i + 1), team: side.n,
+          sub: "OVER " + other.ab + " · " + g.slot,
+          remove: () => this.pick(id, picks[id]),
+        };
+      }),
+      multText: mult ? mult + "x" : "—",
+      stake,
+      payout: mult ? (stake * mult).toLocaleString() : "—",
+      mathLine: mult ? stake + " × " + mult + " = " + (stake * mult).toLocaleString() + " betz" : "pick " + Math.max(0, 3 - count) + " more",
+      quick: [10, 50, 100, 250, "ALL"].map(q => ({
+        label: String(q), on: stake === (q === "ALL" ? 1240 : q), off: stake !== (q === "ALL" ? 1240 : q),
+        set: () => this.setState({ stake: q === "ALL" ? 1240 : q }),
+      })),
+      place: () => this.setState({ placed: true }),
+      placed, notPlaced: !placed,
+
+      showBar: tab === "games" && count > 0,
+      canBuild: count >= 3, cannotBuild: count < 3,
+      barTitle: count + (count === 1 ? " leg" : " legs") + (mult ? " · " + mult + "x" : ""),
+      barSub: count < 3 ? "need " + (3 - count) + " more · min 3 legs" : "to win " + (stake * mult).toLocaleString() + " on " + stake,
+      goTicket: () => this.setState({ tab: "ticket" }),
+      goLeagues: () => this.setState({ tab: "leagues", resolved: true }),
+
+      resolve: () => this.setState(s => ({ resolved: !s.resolved })),
+      resolveLabel: resolved ? "Reset week" : "Settle week",
+      leagueCards: CARDS.map(c => {
+        const allWon = c.outcome.every(o => o === "won");
+        return {
+          user: c.user, initial: c.initial,
+          meta: c.legs.length + "-leg · " + c.mult + " · " + c.stake + " betz",
+          amount: resolved ? (allWon ? "+" + (c.stake * parseInt(c.mult)).toLocaleString() : "−" + c.stake) : c.stake.toLocaleString(),
+          amountLabel: resolved ? (allWon ? "won" : "lost") : "to win " + (c.stake * parseInt(c.mult)).toLocaleString(),
+          legs: c.legs.map((ab, i) => ({
+            ab,
+            won: resolved && c.outcome[i] === "won",
+            lost: resolved && c.outcome[i] === "lost",
+            pending: !resolved,
+          })),
+        };
+      }),
+
+      ranks: RANKS.map((r, i) => ({ ...r, rank: i + 1, me: !!r.me, other: !r.me })),
+
+      tabs: [
+        { key: "games", label: "Games" }, { key: "ticket", label: "Stub" },
+        { key: "leagues", label: "Leagues" }, { key: "ranks", label: "Ranks" },
+      ].map(t => ({ label: t.label, on: tab === t.key, off: tab !== t.key, go: () => this.setState({ tab: t.key }) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

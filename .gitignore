@@ -52,3 +52,6 @@ skills-lock.json
 
 # scratch (files moved aside during cleanup; safe to delete)
 /_to_delete/
+
+# design handoff zip (folder contents are tracked)
+/Form scope and broadcast styling.zip

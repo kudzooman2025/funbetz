@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #08090A; }
+  a { color: #B4F03C; text-decoration: none; }
+  a:hover { color: #D2FA86; }
+</style>
+</helmet>
+
+<section style="padding: 56px 48px 80px; background: #08090A; color: #EDF1F2; font-family: 'IBM Plex Sans', system-ui, sans-serif;">
+  <div style="max-width: 1100px; margin-bottom: 40px;">
+    <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: .22em; text-transform: uppercase; color: #6E7C82;">Turn 1 · broadcast scoreboard direction</div>
+    <h1 style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 52px; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; margin: 10px 0 14px;">Two close variants of the pick → ticket → league loop</h1>
+    <p style="font-size: 15px; line-height: 1.6; color: #A9B4B9; max-width: 720px; text-wrap: pretty; margin: 0;">Same foundation in both: cool-graphite base, Barlow Condensed for anything that behaves like a scoreboard, IBM Plex Mono for numerals, a live lock countdown pinned under the wordmark, and a week that opens on what is bettable now. They differ in the pick surface and in what the shareable artifact is. Both are live — pick 3+ games, build the ticket, then hit <em style="color: #EDF1F2; font-style: normal;">Settle week</em> on the Leagues tab to watch legs resolve. Reference <a href="#1a">1a</a> or <a href="#1b">1b</a> in chat.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 56px; align-items: flex-start;">
+
+    <div id="1a" style="width: 430px;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 24px; padding: 0 8px; border-radius: 3px; background: #B4F03C; color: #0B0E0F; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px;">1a</span>
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: .05em; text-transform: uppercase;">Scoreboard</span>
+      </div>
+      <p style="font-size: 13px; line-height: 1.6; color: #8A979E; margin: 0 0 20px; max-width: 390px; text-wrap: pretty;">Games stack vertically as away-over-home rows, the way a broadcast scoreboard reads. Each row is a 46px target with an LED indicator, so a pick is one tap and never a mis-tap. Lime is the pick colour, amber is money, and a live ticker carries results and other people's hits.</p>
+      <div style="width: 416px; padding: 12px; border-radius: 44px; background: #16191B; border: 1px solid #262D31; box-shadow: 0 30px 70px rgba(0,0,0,.6);">
+        <div style="border-radius: 33px; overflow: hidden; background: #101315;">
+          <dc-import name="FunBetzScoreboard" style="width: 390px; height: 780px;" hint-size="390px,780px"></dc-import>
+        </div>
+      </div>
+    </div>
+
+    <div id="1b" style="width: 430px;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 24px; padding: 0 8px; border-radius: 3px; background: #FFC53D; color: #0B0E0F; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px;">1b</span>
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: .05em; text-transform: uppercase;">Stub</span>
+      </div>
+      <p style="font-size: 13px; line-height: 1.6; color: #8A979E; margin: 0 0 20px; max-width: 390px; text-wrap: pretty;">Keeps the side-by-side matchup you have today, but the pick slabs lead with the team abbreviation at scoreboard scale. The countdown becomes one large clock with a window-progress rule, and the ticket is a cream paper stub with punched notches — the thing worth screenshotting.</p>
+      <div style="width: 416px; padding: 12px; border-radius: 44px; background: #16191B; border: 1px solid #262D31; box-shadow: 0 30px 70px rgba(0,0,0,.6);">
+        <div style="border-radius: 33px; overflow: hidden; background: #101315;">
+          <dc-import name="FunBetzStub" style="width: 390px; height: 780px;" hint-size="390px,780px"></dc-import>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: 56px; max-width: 720px; padding: 20px 22px; border: 1px solid #232A2E; border-radius: 5px; background: #101315;">
+    <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: #6E7C82; margin-bottom: 10px;">Ports cleanly</div>
+    <p style="font-size: 13px; line-height: 1.7; color: #A9B4B9; margin: 0; text-wrap: pretty;">Both variants keep your component anatomy intact: GameRow, locked variant, week header, floating ticket bar, ticket, status pill, league card. The selected state is still a border + tint + colour swap, so it stays one conditional class string in TSX. Team badges are still 26px circles with an initial-letter fallback. New tokens needed: <span style="font-family: 'IBM Plex Mono', monospace; color: #EDF1F2;">--color-brand-dark #101315</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #EDF1F2;">card #171B1E</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #EDF1F2;">surface #20262A</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #EDF1F2;">border #232A2E</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #EDF1F2;">muted #8A979E</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #B4F03C;">green #B4F03C</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #FFC53D;">gold #FFC53D</span>, <span style="font-family: 'IBM Plex Mono', monospace; color: #FF6B5E;">loss #FF6B5E</span>.</p>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

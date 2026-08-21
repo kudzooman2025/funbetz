@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
+/*
+ * Broadcast-scoreboard redesign (variant 1a "Scoreboard").
+ * Single source of truth for brand tokens — tailwind.config.ts deliberately
+ * does not re-declare these.
+ */
 @theme {
-  --color-brand-green: #00C853;
-  --color-brand-gold: #FFD600;
-  --color-brand-dark: #0A0E17;
-  --color-brand-card: #161C2D;
-  --color-brand-border: #2A3350;
-  --color-brand-muted: #94A3B8;
-  --color-brand-surface: #1E2540;
+  --color-brand-dark:    #101315;  /* page background */
+  --color-brand-black:   #0B0E0F;  /* nav bars, inset wells, ticker */
+  --color-brand-card:    #171B1E;  /* card surface */
+  --color-brand-raised:  #14181B;  /* card headers, sub-bars */
+  --color-brand-surface: #20262A;  /* buttons, badges, inputs */
+  --color-brand-border:  #232A2E;  /* hairlines */
+  --color-brand-line:    #2C3439;  /* button borders, dividers */
+  --color-brand-muted:   #8A979E;  /* secondary text */
+  --color-brand-dim:     #6E7C82;  /* tertiary text, inactive tabs */
+  --color-brand-faint:   #4F5A5F;  /* locked / disabled text */
+  --color-brand-green:   #B4F03C;  /* picks, wins, primary action */
+  --color-brand-gold:    #FFC53D;  /* payouts, multiplier */
+  --color-brand-loss:    #FF6B5E;  /* lost legs */
+
+  --font-display: var(--font-barlow-condensed), "Barlow Condensed", sans-serif;
+  --font-sans:    var(--font-ibm-plex-sans), system-ui, sans-serif;
+  --font-mono:    var(--font-ibm-plex-mono), monospace;
 }
 
 body {
   background-color: var(--color-brand-dark);
-  color: #F1F5F9;
+  color: #EDF1F2;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ticket dashed border effect */
+/* ── Broadcast motion ─────────────────────────────────────────────────────
+ * Keyframes ported from the design prototype. Every one of these is gated
+ * behind prefers-reduced-motion below.
+ */
+@keyframes fb-led    { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+@keyframes fb-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes fb-flip   { 0% { transform: rotateX(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes fb-rise   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fb-leg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.animate-led    { animation: fb-led 1.6s ease-in-out infinite; }
+.animate-ticker { animation: fb-ticker 38s linear infinite; }
+.animate-flip   { animation: fb-flip 0.45s ease both; }
+.animate-rise   { animation: fb-rise 0.4s ease both; }
+.animate-leg-in { animation: fb-leg-in 0.35s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-led,
+  .animate-ticker,
+  .animate-flip,
+  .animate-rise,
+  .animate-leg-in {
+    animation: none !important;
+  }
+}
+
+/* Ticket dashed border effect (restyled in Phase 3) */
 .ticket-border {
-  border: 2px dashed var(--color-brand-border);
-  border-radius: 12px;
+  border: 2px dashed var(--color-brand-line);
+  border-radius: 5px;
   position: relative;
 }
 
@@ -36,32 +77,19 @@ body {
   transform: translateY(-50%);
 }
 
-.ticket-border::before {
-  left: -14px;
-}
-
-.ticket-border::after {
-  right: -14px;
-}
+.ticket-border::before { left: -14px; }
+.ticket-border::after  { right: -14px; }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-brand-dark);
-}
-
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-brand-dark); }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-brand-border);
+  background: var(--color-brand-line);
   border-radius: 3px;
 }
 
 /* Hide scrollbar for mobile tab strip */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

@@ -1,16 +1,30 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Barlow_Condensed, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const inter = Inter({
+/*
+ * Broadcast-scoreboard type system:
+ *   Barlow Condensed — display, headings, team names, labels, buttons (always uppercase)
+ *   IBM Plex Mono    — every numeral: countdown, wallet, stake, payout, multiplier, ranks
+ *   IBM Plex Sans    — body copy, usernames, descriptive lines
+ */
+const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["500", "600", "700"],
+  variable: "--font-barlow-condensed",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-sans",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-ibm-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +39,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      className={`${barlowCondensed.variable} ${plexSans.variable} ${plexMono.variable}`}
+    >
       <body className="font-sans antialiased min-h-screen">
         <Providers>{children}</Providers>
       </body>
