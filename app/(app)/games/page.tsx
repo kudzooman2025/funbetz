@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useTicketStore } from "@/stores/ticket-store";
 import { LEAGUES, LEAGUE_KEYS, MULTIPLIERS, type LeagueKey } from "@/lib/constants";
 import { MIN_PARLAY_GAMES, MAX_PARLAY_GAMES } from "@/lib/constants";
+import { formatKickoffSlot } from "@/lib/utils";
 import type { GameResponse } from "@/lib/types";
 
 const PGA_ROUND_NAMES: Record<number, string> = {
@@ -76,21 +77,6 @@ function groupByRound(games: GameResponse[]): Record<number, GameResponse[]> {
 }
 
 const ET = "America/New_York";
-
-/** "Fri 8:00 PM ET" — the kickoff slot shown in a game card's header strip. */
-function kickoffSlot(date: Date): string {
-  return (
-    date
-      .toLocaleString("en-US", {
-        timeZone: ET,
-        weekday: "short",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-      .replace(",", "") + " ET"
-  );
-}
 
 function shortDate(date: Date): string {
   return date
@@ -693,7 +679,7 @@ function GameRow({
     >
       <div className="flex items-center justify-between py-[7px] px-2.5 bg-brand-raised border-b border-brand-border">
         <span className="font-display text-[13px] tracking-[.12em] uppercase text-brand-muted">
-          {kickoffSlot(start)}
+          {formatKickoffSlot(start)}
         </span>
         <span className="font-mono text-[10px] text-brand-dim uppercase">{game.sport}</span>
       </div>

@@ -25,6 +25,25 @@ export function getBettingWindow(): { start: Date; end: Date } {
 }
 
 /**
+ * "Fri 8:00 PM ET" — the compact kickoff slot used on game cards and ticket
+ * legs. Distinct from formatGameTime, which includes the calendar date.
+ */
+export function formatKickoffSlot(date: string | Date): string {
+  const d = new Date(date);
+  return (
+    d
+      .toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        weekday: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", "") + " ET"
+  );
+}
+
+/**
  * Format a date for display in EST timezone.
  */
 export function formatGameTime(date: string | Date): string {
