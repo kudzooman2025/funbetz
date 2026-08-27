@@ -1,13 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
 export default function DashboardPage() {
   const [selected, setSelected] = useState<LeagueKey[]>([]);
+  // EACF is a private dynasty board, not a sport in the parlay pipeline, so it
+  // only appears for members. The check mirrors the one gating /eacf itself.
+  const [eacf, setEacf] = useState<{ isMember: boolean; isAdmin: boolean } | null>(
+    null
+  );
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/eacf/me")
+      .then((r) => r.json())
+      .then((d) => setEacf({ isMember: !!d.isMember, isAdmin: !!d.isAdmin }))
+      .catch(() => setEacf({ isMember: false, isAdmin: false }));
+  }, []);
 
   const toggle = (key: LeagueKey) => {
     setSelected((prev) =>
@@ -71,6 +83,24 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {(eacf?.isMember || eacf?.isAdmin) && (
+        <Link
+          href="/eacf"
+          className="mt-3 flex items-center gap-3 bg-brand-card border border-brand-green/40 rounded-lg p-4 hover:border-brand-green transition-colors"
+        >
+          <span className="text-2xl">&#127944;</span>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-brand-green mb-0.5">
+              EACF Dynasty
+            </h2>
+            <p className="text-brand-muted text-xs">
+              Set the lines and bet the spread on your dynasty games
+            </p>
+          </div>
+          <span className="ml-auto text-brand-green text-sm shrink-0">&rarr;</span>
+        </Link>
+      )}
 
       {/* View Games button */}
       {selected.length > 0 && (
