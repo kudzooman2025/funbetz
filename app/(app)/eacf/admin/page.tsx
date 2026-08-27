@@ -64,6 +64,9 @@ export default function EacfAdminPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
+  /** Surfaced only when the invite email fails, so an invite is never lost. */
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(
     async (forSeason?: string) => {
@@ -119,6 +122,57 @@ export default function EacfAdminPage() {
     }
   }
 
+  /**
+   * Create an account and attach it to a coach in one go. Two calls rather
+   * than one endpoint because account creation is site-wide and deliberately
+   * knows nothing about EACF.
+   */
+  async function invite(coachId: string, email: string, username: string) {
+    setBusy(`invite-${coachId}`);
+    setError("");
+    setNotice("");
+    setInviteLink(null);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, username }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json.error || "Could not create the account");
+        return false;
+      }
+
+      const link = await fetch(`/api/eacf/admin/coaches/${coachId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: json.user.id }),
+      });
+      if (!link.ok) {
+        const lj = await link.json().catch(() => ({}));
+        setError(
+          `Account created, but linking failed: ${lj.error || "unknown error"}. Link it from the dropdown.`
+        );
+      } else if (json.emailSent) {
+        setNotice(`Invite emailed to ${email}.`);
+      } else {
+        setNotice(
+          `Account created, but the email didn't send. Copy this link to ${username}:`
+        );
+        setInviteLink(json.inviteUrl ?? null);
+      }
+
+      await load(season);
+      return true;
+    } catch {
+      setError("Network error");
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }
+
   if (status === "loading" || (!data && !forbidden)) {
     return <p className="text-brand-muted text-sm py-8 text-center">Loading…</p>;
   }
@@ -152,6 +206,17 @@ export default function EacfAdminPage() {
       {error && (
         <div className="bg-brand-loss/10 border border-brand-loss/30 rounded-[4px] p-3 text-brand-loss text-sm">
           {error}
+        </div>
+      )}
+
+      {notice && (
+        <div className="bg-brand-green/10 border border-brand-green/30 rounded-[4px] p-3 text-brand-green text-sm">
+          {notice}
+          {inviteLink && (
+            <code className="block mt-2 font-mono text-[11px] text-white break-all bg-brand-black border border-brand-line rounded-[3px] p-2">
+              {inviteLink}
+            </code>
+          )}
         </div>
       )}
 
@@ -193,6 +258,7 @@ export default function EacfAdminPage() {
         season={season}
         busy={busy}
         send={send}
+        invite={invite}
       />
 
       <ScheduleSection
@@ -212,12 +278,14 @@ function CoachesSection({
   season,
   busy,
   send,
+  invite,
 }: {
   coaches: CoachRow[];
   availableUsers: Overview["availableUsers"];
   season: string;
   busy: string | null;
   send: (k: string, u: string, m: string, b?: unknown) => Promise<boolean>;
+  invite: (coachId: string, email: string, username: string) => Promise<boolean>;
 }) {
   const [name, setName] = useState("");
   const [rank, setRank] = useState("");
@@ -238,6 +306,7 @@ function CoachesSection({
             season={season}
             busy={busy}
             send={send}
+            invite={invite}
           />
         ))}
       </div>
@@ -287,13 +356,17 @@ function CoachRowEditor({
   season,
   busy,
   send,
+  invite,
 }: {
   coach: CoachRow;
   availableUsers: Overview["availableUsers"];
   season: string;
   busy: string | null;
   send: (k: string, u: string, m: string, b?: unknown) => Promise<boolean>;
+  invite: (coachId: string, email: string, username: string) => Promise<boolean>;
 }) {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteUsername, setInviteUsername] = useState(coach.name);
   const [school, setSchool] = useState(coach.school ?? "");
   const [ovr, setOvr] = useState(coach.ratings ? String(coach.ratings.ovr) : "");
   const [off, setOff] = useState(coach.ratings ? String(coach.ratings.off) : "");
@@ -370,6 +443,44 @@ function CoachRowEditor({
           Save
         </button>
       </div>
+
+      {!coach.user && (
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <span className="font-display text-[11px] tracking-[.14em] uppercase text-brand-dim w-6">
+            Inv
+          </span>
+          <input
+            className={`${input} w-52`}
+            placeholder="email"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+          />
+          <input
+            className={`${input} w-32`}
+            placeholder="username"
+            value={inviteUsername}
+            onChange={(e) => setInviteUsername(e.target.value)}
+          />
+          <button
+            className={btnGhost}
+            disabled={
+              !inviteEmail.includes("@") ||
+              inviteUsername.trim().length < 3 ||
+              busy === `invite-${coach.id}`
+            }
+            onClick={async () => {
+              const ok = await invite(coach.id, inviteEmail, inviteUsername);
+              if (ok) setInviteEmail("");
+            }}
+          >
+            {busy === `invite-${coach.id}` ? "Sending…" : "Invite"}
+          </button>
+          <span className="font-mono text-[10px] text-brand-dim">
+            creates the account and emails a set-password link
+          </span>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         <span className="font-display text-[11px] tracking-[.14em] uppercase text-brand-dim w-6">
