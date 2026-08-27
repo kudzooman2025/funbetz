@@ -70,6 +70,11 @@ model User {
   tournamentMemberships TournamentMember[]
   passwordResetTokens   PasswordResetToken[]
 
+  eacfCoach           EacfCoach?
+  eacfLineSubmissions EacfLineSubmission[]
+  eacfBets            EacfBet[]
+  eacfRatingsGiven    EacfCoachRating[]
+
   @@map("users")
 }
 
@@ -214,4 +219,275 @@ model ParlayResult {
   parlay Parlay @relation(fields: [parlayId], references: [id], onDelete: Cascade)
 
   @@map("parlay_results")
+}
+
+
+// ============================================================================
+// EACF — point spread betting for the EA College Football dynasty.
+//
+// Deliberately separate from the Sport/Game/Parlay pipeline: these games come
+// from the admin, not from ESPN, so none of the sync or betting-window logic
+// applies. See EACF_SPEC.md in the repo root.
+// ============================================================================
+
+enum EacfWeekStatus {
+  SETUP
+  OPEN
+  SETTLED
+}
+
+enum EacfGameStatus {
+  AWAITING_LINES
+  OPEN
+  LOCKED
+  FINAL
+}
+
+enum EacfLineSource {
+  CONSENSUS
+  ALGORITHMIC
+}
+
+enum EacfBetResult {
+  PENDING
+  WON
+  LOST
+  PUSH
+}
+
+enum EacfRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model EacfCoach {
+  id   String @id @default(cuid())
+  name String @unique
+
+  /// Chris's original 1-9 power ranking. Bootstraps the line algorithm and is
+  /// the fallback for any coach with fewer than the minimum peer raters. The
+  /// live ranking is derived from peer ratings, not from this.
+  seedRank Int @map("seed_rank")
+
+  /// Null until that coach has a FunBetz account. Non-null is also the
+  /// authorization check for EACF pages.
+  userId String? @unique @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                 User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  seasons              EacfCoachSeason[]
+  teamRatings          EacfTeamRating[]
+  ratingsReceived      EacfCoachRating[]
+  schoolChangeRequests EacfSchoolChangeRequest[]
+  homeGames            EacfGame[]                @relation("EacfHomeCoach")
+  awayGames            EacfGame[]                @relation("EacfAwayCoach")
+
+  @@map("eacf_coaches")
+}
+
+/// School is a per-season fact, never a mutable field on the coach. Storing it
+/// on the coach would retroactively rewrite the school on every historical
+/// game the moment someone switched programs.
+model EacfCoachSeason {
+  id          String   @id @default(cuid())
+  coachId     String   @map("coach_id")
+  seasonLabel String   @map("season_label")
+  schoolName  String   @map("school_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  coach EacfCoach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@unique([coachId, seasonLabel])
+  @@index([seasonLabel])
+  @@map("eacf_coach_seasons")
+}
+
+/// Coaches request a school change; the admin approves. A request table rather
+/// than a pendingSchool field, because betz ride on who is who and a silent
+/// identity change should be traceable.
+model EacfSchoolChangeRequest {
+  id              String            @id @default(cuid())
+  coachId         String            @map("coach_id")
+  seasonLabel     String            @map("season_label")
+  requestedSchool String            @map("requested_school")
+  status          EacfRequestStatus @default(PENDING)
+  note            String?
+  requestedAt     DateTime          @default(now()) @map("requested_at")
+  decidedAt       DateTime?         @map("decided_at")
+
+  /// Admin user id. Intentionally not a foreign key so the audit trail
+  /// survives if that admin account is ever removed.
+  decidedById String? @map("decided_by_id")
+
+  coach EacfCoach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("eacf_school_change_requests")
+}
+
+/// In-game team ratings, captured by the admin. Snapshotted rather than
+/// overwritten so recruiting and progression can be tracked across a season;
+/// the line algorithm uses the most recent snapshot at or before a game's week.
+model EacfTeamRating {
+  id          String @id @default(cuid())
+  coachId     String @map("coach_id")
+  seasonLabel String @map("season_label")
+
+  /// Null means a preseason snapshot.
+  weekNumber Int? @map("week_number")
+
+  ovrRating Int @map("ovr_rating")
+  offRating Int @map("off_rating")
+  defRating Int @map("def_rating")
+
+  capturedAt DateTime @default(now()) @map("captured_at")
+
+  coach EacfCoach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([coachId, seasonLabel, weekNumber])
+  @@map("eacf_team_ratings")
+}
+
+/// Peer ratings, 1-10 per metric. One current row per (rater, subject),
+/// upserted; superseded values are appended to EacfCoachRatingHistory so a
+/// coach's trend can be charted. Self-rating is rejected at the API layer.
+model EacfCoachRating {
+  id        String @id @default(cuid())
+  raterId   String @map("rater_id")
+  subjectId String @map("subject_id")
+
+  rushAtk  Int @map("rush_atk")
+  passAtk  Int @map("pass_atk")
+  rushDef  Int @map("rush_def")
+  passDef  Int @map("pass_def")
+  coaching Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  rater   User      @relation(fields: [raterId], references: [id], onDelete: Cascade)
+  subject EacfCoach @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([raterId, subjectId])
+  @@index([subjectId])
+  @@map("eacf_coach_ratings")
+}
+
+/// Append-only. No foreign keys on purpose: the trend record should outlive
+/// account deletion.
+model EacfCoachRatingHistory {
+  id        String @id @default(cuid())
+  raterId   String @map("rater_id")
+  subjectId String @map("subject_id")
+
+  rushAtk  Int @map("rush_atk")
+  passAtk  Int @map("pass_atk")
+  rushDef  Int @map("rush_def")
+  passDef  Int @map("pass_def")
+  coaching Int
+
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  @@index([subjectId, recordedAt])
+  @@map("eacf_coach_rating_history")
+}
+
+model EacfWeek {
+  id          String         @id @default(cuid())
+  seasonLabel String         @map("season_label")
+  weekNumber  Int            @map("week_number")
+  status      EacfWeekStatus @default(SETUP)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  games EacfGame[]
+
+  @@unique([seasonLabel, weekNumber])
+  @@map("eacf_weeks")
+}
+
+model EacfGame {
+  id          String @id @default(cuid())
+  weekId      String @map("week_id")
+  homeCoachId String @map("home_coach_id")
+  awayCoachId String @map("away_coach_id")
+
+  /// Signed and home-relative: positive means the home coach is favoured.
+  /// Storing it signed lets disagreement about WHICH side is favoured average
+  /// out without special-casing.
+  publishedLine Float?          @map("published_line")
+  currentLine   Float?          @map("current_line")
+  lineSource    EacfLineSource? @map("line_source")
+  publishedAt   DateTime?       @map("published_at")
+
+  homeScore Int? @map("home_score")
+  awayScore Int? @map("away_score")
+
+  status EacfGameStatus @default(AWAITING_LINES)
+
+  /// Set when the admin locks betting, before the game is played. Deliberately
+  /// not score-driven: a score arriving must never be the thing that stops
+  /// betting, or someone ends up betting a game already played.
+  lockedAt DateTime? @map("locked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  week            EacfWeek             @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  homeCoach       EacfCoach            @relation("EacfHomeCoach", fields: [homeCoachId], references: [id])
+  awayCoach       EacfCoach            @relation("EacfAwayCoach", fields: [awayCoachId], references: [id])
+  lineSubmissions EacfLineSubmission[]
+  bets            EacfBet[]
+
+  @@index([weekId])
+  @@index([status])
+  @@map("eacf_games")
+}
+
+/// Blind until the game's line publishes. One per person per game.
+model EacfLineSubmission {
+  id     String @id @default(cuid())
+  gameId String @map("game_id")
+  userId String @map("user_id")
+
+  /// Signed and home-relative, same convention as EacfGame.
+  line Float
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  game EacfGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@map("eacf_line_submissions")
+}
+
+model EacfBet {
+  id     String  @id @default(cuid())
+  gameId String  @map("game_id")
+  userId String  @map("user_id")
+  onHome Boolean @map("on_home")
+  stake  Int
+
+  /// The number this bet was struck at. Grading uses THIS, never the game's
+  /// final line — otherwise line movement would retroactively re-grade
+  /// everyone who bet earlier.
+  lineAtPlacement Float @map("line_at_placement")
+
+  result     EacfBetResult @default(PENDING)
+  payout     Int?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  resolvedAt DateTime?     @map("resolved_at")
+
+  game EacfGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([result])
+  @@map("eacf_bets")
 }

@@ -15,6 +15,7 @@ export const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith("/ticket") ||
         nextUrl.pathname.startsWith("/parlays") ||
         nextUrl.pathname.startsWith("/wallet") ||
+        nextUrl.pathname.startsWith("/eacf") ||
         nextUrl.pathname.startsWith("/admin");
 
       if (requiresAccount) {
