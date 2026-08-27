@@ -299,12 +299,26 @@ function CoachRowEditor({
   const [off, setOff] = useState(coach.ratings ? String(coach.ratings.off) : "");
   const [def, setDef] = useState(coach.ratings ? String(coach.ratings.def) : "");
 
+  // School and ratings sync from props independently. Sharing one effect meant
+  // saving a school re-ran it and wiped half-typed OVR/OFF/DEF values, since
+  // every mutation refetches the whole coach list.
   useEffect(() => {
     setSchool(coach.school ?? "");
-    setOvr(coach.ratings ? String(coach.ratings.ovr) : "");
-    setOff(coach.ratings ? String(coach.ratings.off) : "");
-    setDef(coach.ratings ? String(coach.ratings.def) : "");
-  }, [coach.school, coach.ratings]);
+  }, [coach.school]);
+
+  // Primitive deps rather than coach.ratings: that object is rebuilt on every
+  // refetch, so depending on it would clobber in-progress typing each time
+  // anything else on the page was saved.
+  const savedOvr = coach.ratings?.ovr;
+  const savedOff = coach.ratings?.off;
+  const savedDef = coach.ratings?.def;
+  useEffect(() => {
+    // No snapshot yet — leave whatever the admin has typed alone.
+    if (savedOvr === undefined) return;
+    setOvr(String(savedOvr));
+    setOff(String(savedOff));
+    setDef(String(savedDef));
+  }, [savedOvr, savedOff, savedDef]);
 
   const url = `/api/eacf/admin/coaches/${coach.id}`;
 
