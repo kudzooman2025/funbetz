@@ -451,6 +451,11 @@ function CoachRowEditor({
           <span className="font-display text-[11px] tracking-[.14em] uppercase text-brand-dim w-6">
             Inv
           </span>
+          <span className="w-full font-mono text-[10px] text-brand-dim -mb-1">
+            optional — without an account this coach still appears on the board
+            and others set lines and bet their games; they just can&apos;t
+            submit or bet themselves
+          </span>
           <input
             className={`${input} w-52`}
             placeholder="email"

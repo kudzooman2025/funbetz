@@ -23,7 +23,8 @@ weekly betting window on every run.
 | Decision | Choice | Why |
 |---|---|---|
 | Payout | **−110** — `payout = round(stake / 1.1)` | Volume without an edge bleeds, so season P/L reflects skill rather than click count. Matches the realism Chris wants elsewhere. |
-| Consensus | **Trimmed mean** — drop highest and lowest, average the rest | Robust at n≈7, where z-score outlier rejection is unreliable. Explainable to the league. |
+| Consensus | **Trimmed mean** — drop highest and lowest, average the rest | Robust at n≈7, where z-score outlier rejection is unreliable. Explainable to the league. Falls back to a plain mean below three submissions. |
+| Membership | A coach **does not need a FunBetz account** | Some league members will never sign up. Their games stay on the board and everyone else sets lines and bets on them; they just never submit or bet themselves. |
 | Publication | **Quorum-based**, not clock-based | Same-day rhythm. A game's line publishes the moment it has enough submissions; games come onto the board through the day. |
 | Submissions | **Blind**, and you must submit on a game before you can see its line or bet it | Removes the conflict of interest structurally rather than policing it, and drives quorum. |
 | Line lock | Line **locks at publication** | Late submitters can still bet, but cannot move a published number. |
@@ -49,10 +50,34 @@ whichever side the sign points.
 (3.0 + a 0.5 shift, say), and an exact-margin result is then a push: stake
 refunded, no P/L. This is real-book behaviour and worth keeping.
 
-**Quorum.** 4 submissions publishes a line (configurable). With 9 coaches minus
-the 2 playing, ~7 are eligible, so 4 is a majority of those able to submit.
-A game that never reaches quorum publishes the **algorithmic line** instead, so
-it is still bettable.
+**Quorum is relative, not fixed.** Not every coach in the dynasty has a FunBetz
+account, and some never will — but their games are still on the board and
+everyone else can set lines on them and bet them. A coach without an account is
+a full participant as a *subject*; they simply never submit or bet.
+
+That makes a fixed quorum of 4 wrong: in a league where only five people have
+signed up, a game between two of them leaves three eligible submitters and the
+line could never publish. So quorum is a majority of whoever can actually
+submit on that game, capped at 4 and floored at 2 (`quorumFor` in
+`lib/eacf/constants.ts`):
+
+| Eligible submitters | Quorum |
+|---|---|
+| 7 (all nine signed up) | 4 |
+| 5 | 3 |
+| 3 | 2 |
+| 2 | 2 |
+| 0–1 | none — algorithmic line |
+
+Eligibility is coaches with an account, minus the two playing. Below two
+eligible submitters there is no consensus to take, only one person's opinion on
+a game they may then bet, so the **algorithmic line** publishes instead. The
+same fallback covers any game that simply never reaches its quorum.
+
+**Trimming needs a sample.** The trimmed mean drops the highest and lowest
+submission, which needs at least three to leave anything behind. With two, a
+plain mean is used — honest about the sample size rather than pretending to a
+robustness it cannot support. See `consensusFrom`.
 
 ### Coach ratings — peer-scored, five metrics
 

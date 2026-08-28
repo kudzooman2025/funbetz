@@ -8,8 +8,36 @@
 export const MIN_LINE = 0.5;
 export const MAX_LINE = 30;
 
-/** Submissions needed before a game's consensus line publishes. */
-export const LINE_QUORUM = 4;
+/**
+ * Ceiling on submissions needed before a consensus line publishes. The actual
+ * quorum is relative to how many people could submit — see quorumFor.
+ */
+export const LINE_QUORUM_CAP = 4;
+
+/**
+ * Below this many eligible submitters there is no consensus to take, only one
+ * person's opinion on a game they may then bet. Use the algorithmic line.
+ */
+export const MIN_ELIGIBLE_FOR_CONSENSUS = 2;
+
+/**
+ * How many submissions publish a line, given how many people are eligible to
+ * submit on that game.
+ *
+ * Eligibility is: coaches with a FunBetz account, minus the two playing. Not
+ * every coach in the dynasty will sign up — some never will — and a fixed
+ * quorum of 4 would be unreachable in a league where only a handful have
+ * accounts, so every game would silently fall back to the algorithmic line.
+ * A majority of whoever can actually submit keeps consensus meaningful at any
+ * league size.
+ *
+ * Returns null when consensus isn't possible and the algorithmic line should
+ * be used instead.
+ */
+export function quorumFor(eligibleCount: number): number | null {
+  if (eligibleCount < MIN_ELIGIBLE_FOR_CONSENSUS) return null;
+  return Math.min(LINE_QUORUM_CAP, Math.max(2, Math.ceil(eligibleCount / 2)));
+}
 
 /** Peer raters needed before consensus replaces a coach's seeded rank. */
 export const MIN_RATERS = 3;
@@ -50,6 +78,23 @@ export function clampLine(signed: number): number {
   if (magnitude < MIN_LINE) return rounded < 0 ? -MIN_LINE : MIN_LINE;
   if (magnitude > MAX_LINE) return rounded < 0 ? -MAX_LINE : MAX_LINE;
   return rounded;
+}
+
+/**
+ * The published line from a set of blind submissions: a trimmed mean, dropping
+ * the highest and lowest so one deliberately wild number cannot drag the line.
+ *
+ * Trimming needs something left over to average. With fewer than three
+ * submissions, dropping both ends would leave one value or none, so small sets
+ * use a plain mean — which is the honest thing to do rather than pretending to
+ * a robustness the sample size cannot support.
+ */
+export function consensusFrom(signedLines: number[]): number | null {
+  if (signedLines.length === 0) return null;
+  const sorted = [...signedLines].sort((a, b) => a - b);
+  const kept = sorted.length >= 3 ? sorted.slice(1, -1) : sorted;
+  const mean = kept.reduce((sum, n) => sum + n, 0) / kept.length;
+  return clampLine(mean);
 }
 
 /** Winnings on a settled bet, exclusive of the returned stake. */
