@@ -4,14 +4,9 @@
  */
 
 import { NextResponse } from "next/server";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendInviteEmail } from "@/lib/email";
-
-/** Invites last longer than a password reset — people check email on their own time. */
-const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+import { createInvitedUser } from "@/lib/invite";
 
 async function requireAdmin() {
   const session = await auth();
@@ -70,55 +65,15 @@ export async function POST(req: Request) {
     );
   }
 
-  const clash = await prisma.user.findFirst({
-    where: { OR: [{ email }, { username }] },
-    select: { email: true, username: true },
-  });
-  if (clash) {
+  try {
+    const { user, inviteUrl, emailSent } = await createInvitedUser(email, username);
+    return emailSent
+      ? NextResponse.json({ user, emailSent: true })
+      : NextResponse.json({ user, emailSent: false, inviteUrl });
+  } catch (err) {
     return NextResponse.json(
-      {
-        error:
-          clash.email === email
-            ? "That email already has an account"
-            : "That username is taken",
-      },
+      { error: err instanceof Error ? err.message : "Could not create the account" },
       { status: 409 }
     );
   }
-
-  // The account is created without a usable password. The invitee sets their
-  // own via the token below, so no password is ever generated, transmitted, or
-  // known by anyone else — including the admin creating the account.
-  const unusablePassword = crypto.randomBytes(32).toString("hex");
-  const passwordHash = await bcrypt.hash(unusablePassword, 12);
-
-  const token = crypto.randomBytes(32).toString("hex");
-
-  const user = await prisma.user.create({
-    data: {
-      email,
-      username,
-      passwordHash,
-      passwordResetTokens: {
-        create: {
-          token,
-          expiresAt: new Date(Date.now() + INVITE_TTL_MS),
-        },
-      },
-    },
-    select: { id: true, email: true, username: true, createdAt: true },
-  });
-
-  const inviteUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
-
-  try {
-    await sendInviteEmail(user.email, user.username, inviteUrl);
-  } catch (err) {
-    console.error("Failed to send invite email:", err);
-    // Hand the link back so the admin can pass it on another way rather than
-    // being left with an account nobody can get into.
-    return NextResponse.json({ user, emailSent: false, inviteUrl });
-  }
-
-  return NextResponse.json({ user, emailSent: true });
 }

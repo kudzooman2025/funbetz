@@ -252,6 +252,8 @@ export default function EacfAdminPage() {
         </p>
       </section>
 
+      <SeedSection season={season} onDone={() => load(season)} />
+
       <CoachesSection
         coaches={d.coaches}
         availableUsers={d.availableUsers}
@@ -779,5 +781,186 @@ function GameRowEditor({
         </button>
       )}
     </div>
+  );
+}
+
+interface SeedRowResult {
+  name: string;
+  actions: string[];
+  error?: string;
+  inviteUrl?: string;
+  emailSent?: boolean;
+}
+
+/**
+ * Paste the whole roster at once. Preview first, apply second — the preview
+ * is what makes sending real email to nine people a deliberate act rather
+ * than a surprise.
+ */
+function SeedSection({
+  season,
+  onDone,
+}: {
+  season: string;
+  onDone: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [sendInvites, setSendInvites] = useState(false);
+  const [results, setResults] = useState<SeedRowResult[] | null>(null);
+  const [wasDryRun, setWasDryRun] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [open, setOpen] = useState(false);
+
+  /** One coach per line: Name, School, email@x.com — rank follows line order. */
+  function parse() {
+    return text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [name, school, email, rank] = line.split(",").map((c) => c.trim());
+        return {
+          name,
+          school: school || undefined,
+          email: email || undefined,
+          rank: rank ? Number(rank) : undefined,
+        };
+      })
+      .filter((r) => r.name);
+  }
+
+  async function run(dryRun: boolean) {
+    const rows = parse();
+    if (rows.length === 0) {
+      setErr("Nothing to seed — add one coach per line.");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    try {
+      const res = await fetch("/api/eacf/admin/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seasonLabel: season, rows, sendInvites, dryRun }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr(json.error || "Seeding failed");
+        return;
+      }
+      setResults(json.results ?? []);
+      setWasDryRun(dryRun);
+      if (!dryRun) onDone();
+    } catch {
+      setErr("Network error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className={`${card} p-3`}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 text-left"
+      >
+        <span className="text-brand-dim text-[11px]">{open ? "\u25BE" : "\u25B8"}</span>
+        <span className={label}>Seed roster</span>
+        <span className="font-mono text-[10px] text-brand-dim ml-auto">
+          paste the whole league at once
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <textarea
+            className={`${input} w-full h-40 font-mono text-[12px] leading-relaxed`}
+            placeholder={"Name, School, email@example.com\nName, School, email@example.com\n\nOne coach per line. School and email are optional.\nRank follows line order unless you add a 4th column."}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sendInvites}
+              onChange={(e) => setSendInvites(e.target.checked)}
+              className="accent-[#B4F03C]"
+            />
+            <span className="font-display text-[13px] tracking-[.1em] uppercase text-brand-muted">
+              also create accounts and email invites
+            </span>
+          </label>
+
+          {sendInvites && (
+            <p className="font-mono text-[10px] text-brand-gold">
+              this sends real email — preview first
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              className={btnGhost}
+              disabled={busy || !season}
+              onClick={() => run(true)}
+            >
+              {busy ? "Working…" : "Preview"}
+            </button>
+            <button
+              className={btnPrimary}
+              disabled={busy || !season || !results || wasDryRun === false}
+              onClick={() => run(false)}
+            >
+              Apply
+            </button>
+            {!season && (
+              <span className="font-mono text-[10px] text-brand-dim self-center">
+                set a season first
+              </span>
+            )}
+          </div>
+
+          {err && (
+            <p className="text-brand-loss text-sm">{err}</p>
+          )}
+
+          {results && (
+            <div className="border border-brand-border rounded-[4px] overflow-hidden">
+              <div className="px-2.5 py-1.5 bg-brand-black border-b border-brand-border font-display text-[12px] tracking-[.14em] uppercase text-brand-muted">
+                {wasDryRun ? "Preview — nothing written yet" : "Applied"}
+              </div>
+              <div className="divide-y divide-brand-border">
+                {results.map((r, i) => (
+                  <div key={`${r.name}-${i}`} className="px-2.5 py-1.5 flex items-center gap-2 flex-wrap">
+                    <span className="font-display text-[15px] tracking-[.03em] uppercase min-w-[90px]">
+                      {r.name}
+                    </span>
+                    <span className="font-mono text-[10px] text-brand-dim">
+                      {r.actions.length ? r.actions.join(" · ") : "no change"}
+                    </span>
+                    {r.emailSent === false && (
+                      <span className="font-mono text-[10px] text-brand-gold">
+                        email failed
+                      </span>
+                    )}
+                    {r.error && (
+                      <span className="font-mono text-[10px] text-brand-loss ml-auto">
+                        {r.error}
+                      </span>
+                    )}
+                    {r.inviteUrl && (
+                      <code className="w-full font-mono text-[10px] text-white break-all bg-brand-black border border-brand-line rounded-[3px] p-1.5 mt-1">
+                        {r.inviteUrl}
+                      </code>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
