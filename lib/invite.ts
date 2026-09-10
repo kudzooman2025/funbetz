@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendInviteEmail } from "@/lib/email";
+import { normalizeEmail } from "./account-email";
 
 /** Invites last longer than a password reset — people check email on their own time. */
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -23,13 +24,14 @@ export async function createInvitedUser(
   email: string,
   username: string
 ): Promise<InviteResult> {
+  email = normalizeEmail(email);
   const clash = await prisma.user.findFirst({
-    where: { OR: [{ email }, { username }] },
+    where: { OR: [{ email: { equals: email, mode: "insensitive" } }, { username }] },
     select: { email: true },
   });
   if (clash) {
     throw new Error(
-      clash.email === email
+      normalizeEmail(clash.email) === email
         ? "That email already has an account"
         : "That username is taken"
     );

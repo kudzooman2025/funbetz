@@ -1,6 +1,11 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | undefined;
+function getResend() {
+  // Builds import route modules without sending mail. Require the key only
+  // when a caller actually sends, so its existing error handling can run.
+  return resend ??= new Resend(process.env.RESEND_API_KEY);
+}
 
 const FROM = "FunBetz <noreply@funbetz.life>";
 
@@ -9,7 +14,7 @@ export async function sendPasswordResetEmail(
   username: string,
   resetUrl: string
 ) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: "Reset your FunBetz password",
@@ -33,7 +38,7 @@ export async function sendUsernameReminderEmail(
   to: string,
   username: string
 ) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: "Your FunBetz username",
@@ -55,7 +60,7 @@ export async function sendInviteEmail(
   username: string,
   inviteUrl: string
 ) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: "You're invited to FunBetz",
@@ -80,7 +85,7 @@ export async function sendAdminPasswordResetEmail(
   username: string,
   tempPassword: string
 ) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: "Your FunBetz password has been reset by an admin",

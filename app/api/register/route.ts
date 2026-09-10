@@ -19,8 +19,8 @@ export async function POST(req: Request) {
     const { email, username, password } = parsed.data;
 
     // Check for existing email
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
+    const existingEmail = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
     });
     if (existingEmail) {
       return NextResponse.json(

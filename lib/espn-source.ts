@@ -99,7 +99,8 @@ export function espnStatus(
   completed?: boolean
 ): GameStatus {
   const n = (name || "").toUpperCase();
-  if (n.includes("POSTPONED") || n.includes("DELAYED")) return "POSTPONED";
+  if (n.includes("DELAYED") || n.includes("SUSPENDED")) return "IN_PROGRESS";
+  if (n.includes("POSTPONED")) return "POSTPONED";
   if (n.includes("CANCEL")) return "CANCELLED";
   if (completed || state === "post") return "COMPLETED";
   if (state === "in") return "IN_PROGRESS";

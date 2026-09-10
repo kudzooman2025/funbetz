@@ -717,7 +717,7 @@ function LockedRow({ game, window }: { game: GameResponse; window: BettingWindow
       </span>
       <span className="font-mono text-[10px] text-brand-faint shrink-0">{shortDate(start)}</span>
       <span className="font-display text-[12px] tracking-[.1em] uppercase text-brand-faint shrink-0">
-        {opensLabel(window)}
+        {GOLF_SPORTS.has(game.sport) ? "Betting paused" : opensLabel(window)}
       </span>
     </div>
   );

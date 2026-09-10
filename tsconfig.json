@@ -39,6 +39,7 @@
     "node_modules",
     "prisma",
     "generated",
-    "_archive"
+    "_archive",
+    "_to_delete"
   ]
 }

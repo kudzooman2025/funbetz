@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createParlaySchema } from "@/lib/validators";
 import { MULTIPLIERS, GAME_BUFFER_HOURS } from "@/lib/constants";
 import { getBettingWindow } from "@/lib/utils";
+import { isSportBettable } from "@/lib/betting-availability";
 
 export async function GET() {
   const session = await auth();
@@ -127,6 +128,9 @@ export async function POST(req: Request) {
   }
 
   for (const game of dbGames) {
+    if (!isSportBettable(game.sport)) {
+      return NextResponse.json({ error: "Golf betting is paused while results verification is unavailable." }, { status: 400 });
+    }
     if (game.status !== "SCHEDULED") {
       return NextResponse.json(
         { error: `Game "${game.homeTeam} vs ${game.awayTeam}" is no longer available` },

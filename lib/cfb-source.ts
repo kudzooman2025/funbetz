@@ -96,7 +96,10 @@ export function normalizeCfbdRow(
   };
 }
 
-async function fetchCfbdSeason(year: number): Promise<NormalizedGame[]> {
+export async function fetchCfbdSeason(year: number): Promise<NormalizedGame[]> {
+  if (!process.env.CFBD_API_KEY) {
+    throw new Error("CFBD_API_KEY is required to refresh existing CFBD tickets; retain it until they settle.");
+  }
   const logos = await fetchCfbdTeamLogos();
   const games: NormalizedGame[] = [];
 

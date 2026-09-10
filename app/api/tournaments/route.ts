@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
+import { parseLeagueDate } from "@/lib/league-dates";
 import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
 function generateInviteCode(): string {
@@ -87,8 +88,8 @@ export async function POST(req: Request) {
   if (!startDate || !endDate) {
     return NextResponse.json({ error: "Start and end dates are required." }, { status: 400 });
   }
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLeagueDate(startDate);
+  const end = parseLeagueDate(endDate);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     return NextResponse.json({ error: "Invalid dates." }, { status: 400 });
   }

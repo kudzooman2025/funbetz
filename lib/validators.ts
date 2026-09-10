@@ -2,7 +2,7 @@ import { z } from "zod";
 import { BET_MIN, REPLENISH_MIN, REPLENISH_MAX, MIN_PARLAY_GAMES, MAX_PARLAY_GAMES } from "./constants";
 
 export const registerSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   username: z
     .string()
     .min(3, "Username must be at least 3 characters")
@@ -15,7 +15,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 

@@ -14,8 +14,9 @@
 
 import { LEAGUES, LEAGUE_KEYS, type LeagueKey } from "./constants";
 import { prisma } from "./prisma";
-import { fetchFbsSeason, cfbProviderName, cfbPrefix } from "./cfb-source";
-import { fetchEspnLeagueSeason, espnPrefix, isEspnLeague } from "./espn-source";
+import { fetchFbsSeason, fetchCfbdSeason, cfbProviderName, cfbPrefix } from "./cfb-source";
+import { fetchEspnLeagueSeason, espnPrefix } from "./espn-source";
+import { gameSource, originalSeasonLookup } from "./game-source";
 import {
   fetchRoundEvents,
   fetchEventById,
@@ -186,17 +187,43 @@ export async function syncFullSeason(
 export async function updateActiveParlayGames(results: SyncResults) {
   const pendingGames = await prisma.game.findMany({
     where: {
-      status: { not: "COMPLETED" },
       parlayGames: { some: { parlay: { status: "PENDING" } } },
-      // Provider-backed leagues are refreshed by syncProviderSeason; their
-      // external IDs are not TheSportsDB event IDs.
-      sport: { notIn: PROVIDER_LEAGUES },
+      sport: { notIn: ["PGA", "LIV"] },
     },
-    select: { externalId: true, id: true, sport: true },
+    select: { externalId: true, id: true, sport: true, season: true, scheduledStart: true, completedAt: true },
   });
 
+  // Fetch each original provider/season once, even after configuration changes.
+  const lookup = originalSeasonLookup((source, year) => source === "cfbd"
+    ? fetchCfbdSeason(year)
+    : fetchEspnLeagueSeason(source === "espn-nfl" ? "NFL" : "NCAAF", year));
   for (const game of pendingGames) {
     try {
+      const source = gameSource(game.externalId);
+      if (!source) {
+        results.errors.push(`Game ${game.externalId}: unrecognized results source`);
+        continue;
+      }
+      if (source !== "sportsdb") {
+        const updated = await lookup(game);
+        if (!updated) {
+          results.errors.push(`Game ${game.externalId}: original provider returned no result`);
+          continue;
+        }
+        await prisma.game.update({
+          where: { id: game.id },
+          data: {
+            homeScore: updated.homeScore,
+            awayScore: updated.awayScore,
+            status: updated.status,
+            scheduledStart: updated.scheduledStart,
+            round: updated.round,
+            completedAt: updated.status === "COMPLETED" ? (game.completedAt ?? new Date()) : null,
+          },
+        });
+        results.updated++;
+        continue;
+      }
       const event = await fetchEventById(game.externalId);
       if (!event) continue;
 
@@ -210,7 +237,7 @@ export async function updateActiveParlayGames(results: SyncResults) {
           homeScore: gameData.homeScore,
           awayScore: gameData.awayScore,
           status: gameData.status,
-          completedAt: gameData.completedAt,
+          completedAt: gameData.status === "COMPLETED" ? (game.completedAt ?? new Date()) : null,
           scheduledStart: gameData.scheduledStart,
           round: gameData.round,
         },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { leagueEndExclusive } from "@/lib/league-dates";
 
 export async function GET(
   _req: Request,
@@ -46,7 +47,7 @@ export async function GET(
         userId: { in: memberUserIds },
         createdAt: {
           gte: tournament.startDate,
-          lte: tournament.endDate,
+          lt: leagueEndExclusive(tournament.endDate),
         },
         parlayGames: {
           some: {

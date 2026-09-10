@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { TournamentDetail, TournamentLeaderboardEntry } from "@/lib/types";
 import { LEAGUES } from "@/lib/constants";
+import { leagueEndExclusive } from "@/lib/league-dates";
 import { LeagueCards } from "@/components/leagues/league-cards";
 
 type Tab = "leaderboard" | "cards" | "members" | "info";
@@ -131,7 +132,7 @@ export default function TournamentDetailPage() {
   const start = new Date(tournament.startDate);
   const end = new Date(tournament.endDate);
   const isActive = tournament.status === "ACTIVE";
-  const isLive = isActive && now >= start && now <= end;
+  const isLive = isActive && now >= start && now < leagueEndExclusive(end);
   const isUpcoming = isActive && now < start;
 
   const statusLabel = tournament.status === "CANCELLED" ? "Cancelled" : isUpcoming ? "Upcoming" : isLive ? "Live" : "Ended";
@@ -169,9 +170,9 @@ export default function TournamentDetailPage() {
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-muted">
           <span>
-            {new Date(tournament.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            {new Date(tournament.startDate).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })}
             {" – "}
-            {new Date(tournament.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            {new Date(tournament.endDate).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })} UTC
           </span>
           <span>{tournament.memberCount} {tournament.memberCount === 1 ? "member" : "members"}</span>
         </div>

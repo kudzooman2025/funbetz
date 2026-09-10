@@ -93,6 +93,7 @@ export default function CreateTournamentPage() {
         </div>
 
         {/* Date range */}
+        <p className="text-sm text-brand-muted">Dates use UTC. The entire end date counts toward league scores.</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium mb-1.5">Start Date</label>

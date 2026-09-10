@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { findUserByEmail } from "@/lib/account-email";
 import { sendPasswordResetEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
@@ -18,10 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true }); // silent
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
-      select: { id: true, username: true, email: true },
-    });
+    const user = await findUserByEmail(prisma, email);
 
     if (user) {
       // Invalidate any existing tokens for this user

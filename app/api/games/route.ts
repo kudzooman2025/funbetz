@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getBettingWindow } from "@/lib/utils";
+import { isSportBettable } from "@/lib/betting-availability";
 import { LEAGUE_KEYS, type LeagueKey } from "@/lib/constants";
 
 /** Safety cap so a full multi-league season can't return an unbounded payload. */
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
 
   const withBettable = games.map((game) => ({
     ...game,
-    bettable: game.scheduledStart >= start && game.scheduledStart <= end,
+    bettable: isSportBettable(game.sport) && game.scheduledStart >= start && game.scheduledStart <= end,
   }));
 
   return NextResponse.json({

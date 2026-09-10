@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { TournamentSummary } from "@/lib/types";
 import { LEAGUES } from "@/lib/constants";
+import { leagueEndExclusive } from "@/lib/league-dates";
 
 export default function TournamentsPage() {
   const router = useRouter();
@@ -138,7 +139,7 @@ function TournamentCard({ tournament: t }: { tournament: TournamentSummary }) {
   const start = new Date(t.startDate);
   const end = new Date(t.endDate);
 
-  const dateRange = `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+  const dateRange = `${start.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" })} – ${end.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" })} UTC`;
 
   const sportLabels = t.sports
     .map((s) => {
@@ -151,7 +152,7 @@ function TournamentCard({ tournament: t }: { tournament: TournamentSummary }) {
     t.status === "ACTIVE"
       ? now < start
         ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-        : now > end
+        : now >= leagueEndExclusive(end)
         ? "bg-gray-500/10 text-gray-400 border border-gray-500/20"
         : "bg-brand-green/10 text-brand-green border border-brand-green/20"
       : "bg-gray-500/10 text-gray-400 border border-gray-500/20";
@@ -161,7 +162,7 @@ function TournamentCard({ tournament: t }: { tournament: TournamentSummary }) {
       ? "Cancelled"
       : now < start
       ? "Upcoming"
-      : now > end
+      : now >= leagueEndExclusive(end)
       ? "Ended"
       : "Live";
 

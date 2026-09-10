@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { leagueEndExclusive } from "@/lib/league-dates";
 
 /**
  * GET /api/tournaments/[id]/parlays
@@ -52,7 +53,7 @@ export async function GET(
     where: {
       userId: { in: memberIds },
       // Only cards placed during the league's run count toward it.
-      createdAt: { gte: tournament.startDate, lte: tournament.endDate },
+      createdAt: { gte: tournament.startDate, lt: leagueEndExclusive(tournament.endDate) },
     },
     orderBy: { createdAt: "desc" },
     take: 200,

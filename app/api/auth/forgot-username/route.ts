@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { findUserByEmail } from "@/lib/account-email";
 import { sendUsernameReminderEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
@@ -17,10 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
-      select: { username: true, email: true },
-    });
+    const user = await findUserByEmail(prisma, email);
 
     if (user) {
       try {

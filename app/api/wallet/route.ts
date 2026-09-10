@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { replenishSchema } from "@/lib/validators";
-import { WALLET_MAX } from "@/lib/constants";
+import { replenishWallet } from "@/lib/wallet";
 
 export async function GET() {
   const session = await auth();
@@ -36,40 +36,11 @@ export async function POST(req: Request) {
 
   const { amount } = parsed.data;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { walletBalance: true },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  try {
+    const balance = await replenishWallet(prisma, session.user.id, amount);
+    return NextResponse.json({ balance });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not replenish wallet";
+    return NextResponse.json({ error: message }, { status: message === "User not found" ? 404 : 400 });
   }
-
-  if (user.walletBalance !== 0) {
-    return NextResponse.json(
-      { error: "Wallet must be at 0 to replenish" },
-      { status: 400 }
-    );
-  }
-
-  // Block replenish if user has any active (PENDING) parlays
-  const activeParlays = await prisma.parlay.count({
-    where: { userId: session.user.id, status: "PENDING" },
-  });
-
-  if (activeParlays > 0) {
-    return NextResponse.json(
-      { error: "You cannot replenish while you have active parlays. Wait for all bets to resolve." },
-      { status: 400 }
-    );
-  }
-
-  const newBalance = Math.min(amount, WALLET_MAX);
-
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { walletBalance: newBalance },
-  });
-
-  return NextResponse.json({ balance: newBalance });
 }
